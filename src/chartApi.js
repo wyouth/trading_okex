@@ -9,17 +9,7 @@ const exchanges = [
 const fetchBaseUrl = {
     OKEX: 'https://www.okex.com',
 }
-class Granularities {
-    static oneMin = 60;
-    static threeMin = 180;
-    static fiveMin = 300;
-    // static oneMin = 60;
-    // static oneMin = 60;
-    // static oneMin = 60;
-    // static oneMin = 60;
-    // static oneMin = 60;
-    // static oneMin = 60;
-}
+const supportedResolutions = ["1", "3", "5", "15", "30", "60", "120", "240", "360", "720", "D"];
 
 class ExChangeData {
     _instruments = [];
@@ -82,7 +72,7 @@ export default {
             if (i.quote_currency === symbolType && userInput !== symbolType && i.base_currency.indexOf(userInput) > -1) {
                 const instrument_id = i.instrument_id.replace('-', '/');
                 arr.push({
-                    "symbol": i.base_currency,
+                    "symbol": `${exchange}:${i.base_currency}`,
                     "full_name": instrument_id,
                     "description": instrument_id,
                     "exchange": exchange,
@@ -99,15 +89,22 @@ export default {
         console.table({symbolName});
 
         await setTimeout(() => {}, 0);
+        const symbolData = symbolName.split(':');
         onSymbolResolvedCallback({
             name: symbolName,
-            ticker: symbolName,
-            timezone: 'Asia/Shanghai',
-            minmov: 0.001,
-            pricescale: 0.001,
-            session: '24x7',
-            exchange: 'OKEX',
-            has_intraday: true,
+			description: '',
+			type: 'crypto',
+			session: '24x7',
+			timezone: 'Etc/UTC',
+			ticker: symbolData[1],
+			exchange: symbolData[0],
+			minmov: 1,
+			pricescale: 100000000,
+			has_intraday: true,
+			intraday_multipliers: ['1', '60'],
+			supported_resolution:  supportedResolutions,
+			volume_precision: 8,
+			data_status: 'streaming',
         });
     },
     getBars: async (symbolInfo, resolution, from, to, onHistoryCallback, onErrorCallback, firstDataRequest) => {
@@ -116,6 +113,7 @@ export default {
         if (firstDataRequest) {
             const startTime = new Date((from) * 1000).toISOString();
             const endTime = new Date((to) * 1000).toISOString();
+
             const response = await fetch(ExChangeData.baseUrl + `/api/spot/v3/instruments/${symbolInfo.ticker.replace('/', '-')}/candles?start=${startTime}&end=${endTime}&granularity=86400`, {
                 method: 'GET',
             });
@@ -126,7 +124,7 @@ export default {
                 time: moment(i.time).valueOf()
             }));
             var data = finalResult.reverse();
-            console.table(data);
+            // console.table(data);
             onHistoryCallback(data, {
                 noData: false
             });
@@ -151,6 +149,13 @@ export default {
     //     console.warn('chartApi calculateHistoryDepth');
     //     console.table({resolution, resolutionBack, intervalBack});
     // },
+    // calculateHistoryDepth: (resolution, resolutionBack, intervalBack) => {
+	// 	//optional
+	// 	console.log('=====calculateHistoryDepth running')
+	// 	// while optional, this makes sure we request 24 hours of minute data at a time
+	// 	// CryptoCompare's minute data endpoint will throw an error if we request data beyond 7 days in the past, and return no data
+	// 	return resolution < 60 ? {resolutionBack: 'D', intervalBack: '1'} : undefined
+	// },
     getMarks: (symbolInfo, startDate, endDate, onDataCallback, resolution) => {
         console.warn('chartApi getMarks');
         console.table({symbolInfo, startDate, endDate, resolution});
