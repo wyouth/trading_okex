@@ -9,7 +9,7 @@ class Chart extends Component {
                 debug: true,
                 symbol: 'BTC/USDT',
                 datafeed: chartApi,
-                interval: '15',
+                interval: '1',
                 container_id: 'tv_chart_container',
                 library_path: '/assets/charting_library/',
                 timeframe: '1D',
