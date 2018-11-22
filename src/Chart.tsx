@@ -5,7 +5,7 @@ import chartApi from './chartApi';
 class Chart extends Component {
     componentDidMount() {
         window.TradingView.onready(function() {
-            var widget = window.tvWidget = new window.TradingView.widget({
+            window.tvWidget = new window.TradingView.widget({
                 debug: true,
                 symbol: 'BTC/USDT',
                 datafeed: chartApi,

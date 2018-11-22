@@ -12,20 +12,17 @@ const fetchBaseUrl = {
 };
 const supportedResolutions = ['1', '3', '5', '15', '30', '60', '120', '240', 'D'];
 
-const SingleTimeDataLimit = 200;
-
-const getCandles = async ({ ticker, start, end, granularity }) => {
+const getCandles = async ({ ticker, from, to, resolution }) => {
     const response = await fetch(
         // https://www.okex.com/v2/market/index/kLine?symbol=f_usd_btc&type=1min&contractType=this_week&limit=1000&coinVol=0
-        ExChangeData.baseUrl +
             // `/api/spot/v3/instruments/${ticker}/candles?start=${start}&end=${end}&granularity=${granularity}`,
-            `/v2/market/index/kLine?symbol=f_usd_btc&1min&contractType=this_week&limit=1000&coinVol=0`,
+            `https://www.okex.com/v2/market/index/kLine?symbol=f_usd_btc&1min&contractType=this_week&limit=1000&coinVol=0`,
         {
             method: 'GET'
         }
     );
     const result = await response.json();
-    return result.data.map((i, index) => ({
+    return result.data.map(i => ({
         // ...i,
         // close: Number(i.close),
         // open: Number(i.open),
@@ -38,40 +35,19 @@ const getCandles = async ({ ticker, start, end, granularity }) => {
         high: i[2],
         low: i[3],
         close: i[4],
-        volume: i[5],
+        volume: i[5]
     }));
 };
 
-// const loopGetCandles
-
-class ExChangeData {
-    _instruments = [];
-    _baseUrl = '';
-
-    get instruments() {
-        return this._instruments;
-    }
-    set instruments(data) {
-        this._instruments = data;
-    }
-
-    get baseUrl() {
-        return this._baseUrl;
-    }
-    set baseUrl(data) {
-        this._baseUrl = data;
-    }
-}
-
+let instruments: any[] = [];
 export default {
     onReady: async callback => {
         console.warn('chartApi onReady');
-        ExChangeData.baseUrl = fetchBaseUrl.OKEX;
-        const response = await fetch(ExChangeData.baseUrl + '/api/spot/v3/instruments', {
+        const response = await fetch('https://www.okex.com//api/spot/v3/instruments', {
             method: 'GET'
         });
         const result = await response.json();
-        ExChangeData.instruments = result;
+        instruments = result;
         let symbols_types = [];
         let symbols_types_map = {};
         result.forEach(i => {
@@ -103,7 +79,7 @@ export default {
         //     "type": "stock" | "futures" | "bitcoin" | "forex" | "index"
         // }
         let arr = [];
-        ExChangeData.instruments.forEach(i => {
+        instruments.forEach(i => {
             if (
                 i.quote_currency === symbolType &&
                 userInput !== symbolType &&
@@ -151,48 +127,52 @@ export default {
         console.warn('getBars symbolInfo', symbolInfo);
         console.table({ resolution, from, to, firstDataRequest });
         // if (firstDataRequest) {
-        const startTime = new Date(from * 1000).toISOString();
-        const endTime = new Date(to * 1000).toISOString();
         const ticker = symbolInfo.ticker.replace('/', '-');
-        let granularity;
-        if (resolution === 'D') {
-            granularity = 86400;
-        } else {
-            granularity = Number(resolution) * 60;
-        }
-        const loopTimes = Math.ceil((to - from) / granularity / SingleTimeDataLimit);
-        let asyncArrs = new Array(loopTimes).fill(0);
-        console.log(asyncArrs);
-        const result = await Promise.all(
-            asyncArrs.map((_, index) => {
-                const start = to - granularity * (index + 1) * SingleTimeDataLimit;
-                const end = to - granularity * index * SingleTimeDataLimit;
-                console.log('start', start);
-                console.log('end', end);
-                return getCandles({
-                    ticker,
-                    granularity,
-                    start: new Date(start < from ? from * 1000 : start * 1000).toISOString(),
-                    end: new Date(end * 1000).toISOString()
-                });
-            })
-        );
-        console.warn('result', result);
-        let finalResult = [];
-        result.forEach(i => (finalResult = finalResult.concat(i)));
+        // let granularity;
+        // if (resolution === 'D') {
+        //     granularity = 86400;
+        // } else {
+        //     granularity = Number(resolution) * 60;
+        // }
+        // const loopTimes = Math.ceil((to - from) / granularity / SingleTimeDataLimit);
+        // let asyncArrs = new Array(loopTimes).fill(0);
+        // console.log(asyncArrs);
+        // const result = await Promise.all(
+        //     asyncArrs.map((_, index) => {
+        //         const start = to - granularity * (index + 1) * SingleTimeDataLimit;
+        //         const end = to - granularity * index * SingleTimeDataLimit;
+        //         console.log('start', start);
+        //         console.log('end', end);
+        //         return getCandles({
+        //             ticker,
+        //             granularity,
+        //             start: new Date(start < from ? from * 1000 : start * 1000).toISOString(),
+        //             end: new Date(end * 1000).toISOString()
+        //         });
+        //     })
+        // );
+        // console.warn('result', result);
+        // let finalResult = [];
+        // result.forEach(i => (finalResult = finalResult.concat(i)));
+        let finalResult = await getCandles({
+            ticker,
+            resolution,
+            from,
+            to
+        });
         let noData = finalResult.length === 0;
-        const candles = finalResult;
-        console.warn('finalResult', finalResult);
-        let nextTime = noData ? to * 1000 : undefined;
-        if (noData) {
-            nextTime = to * 1000;
-        }
-        if (!noData && ((from * 1000 - candles[0].time) > granularity * 1000) ) {
-            nextTime = candles[0].time;
-        }
+        // const candles = finalResult;
+        // console.warn('finalResult', finalResult);
+        // let nextTime = noData ? to * 1000 : undefined;
+        // if (noData) {
+        //     nextTime = to * 1000;
+        // }
+        // if (!noData && from * 1000 - candles[0].time > granularity * 1000) {
+        //     nextTime = candles[0].time;
+        // }
         // console.table(data);
-        onHistoryCallback(candles, {
-            noData,
+        onHistoryCallback(finalResult, {
+            noData
             // nextTime
         });
         // }
