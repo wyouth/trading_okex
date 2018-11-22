@@ -7,11 +7,13 @@ class Chart extends Component {
         window.TradingView.onready(function() {
             var widget = (window.tvWidget = new window.TradingView.widget({
                 debug: true,
-                symbol: 'OKEX:BTC/USDT',
+                symbol: 'BTC/USDT',
                 datafeed: chartApi,
                 interval: '15',
                 container_id: 'tv_chart_container',
                 library_path: '/assets/charting_library/',
+                timeframe: '1D',
+                timezone: 'Asia/Shanghai',
                 locale: 'zh',
                 disabled_features: ['use_localstorage_for_settings'],
                 enabled_features: ['study_templates'],

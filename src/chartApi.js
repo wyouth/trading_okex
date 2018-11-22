@@ -9,7 +9,7 @@ const exchanges = [
 const fetchBaseUrl = {
     OKEX: 'https://www.okex.com',
 }
-const supportedResolutions = ["1", "3", "5", "15", "30", "60", "120", "240", "360", "720", "D"];
+const supportedResolutions = ["1", "3", "5", "15", "30", "60", "120", "240", "D"];
 
 class ExChangeData {
     _instruments = [];
@@ -89,19 +89,18 @@ export default {
         console.table({symbolName});
 
         await setTimeout(() => {}, 0);
-        const symbolData = symbolName.split(':');
         onSymbolResolvedCallback({
             name: symbolName,
 			description: '',
 			type: 'crypto',
 			session: '24x7',
 			timezone: 'Etc/UTC',
-			ticker: symbolData[1],
-			exchange: symbolData[0],
+			ticker: symbolName,
+			exchange: 'OKEX',
 			minmov: 1,
 			pricescale: 100000000,
 			has_intraday: true,
-			intraday_multipliers: ['1', '60'],
+			intraday_multipliers: ['1', '3', '5', '15', '30', '60', '120', '240', '360', '720'],
 			supported_resolution:  supportedResolutions,
 			volume_precision: 8,
 			data_status: 'streaming',
@@ -109,12 +108,18 @@ export default {
     },
     getBars: async (symbolInfo, resolution, from, to, onHistoryCallback, onErrorCallback, firstDataRequest) => {
         console.warn('chartApi getBars');
-        console.table({symbolInfo, resolution, from, to, firstDataRequest});
-        if (firstDataRequest) {
+        console.warn('getBars symbolInfo', symbolInfo);
+        console.table({resolution, from, to, firstDataRequest});
+        // if (firstDataRequest) {
             const startTime = new Date((from) * 1000).toISOString();
             const endTime = new Date((to) * 1000).toISOString();
-
-            const response = await fetch(ExChangeData.baseUrl + `/api/spot/v3/instruments/${symbolInfo.ticker.replace('/', '-')}/candles?start=${startTime}&end=${endTime}&granularity=86400`, {
+            let granularity;
+            if (resolution === 'D') {
+                granularity = 86400;
+            } else {
+                granularity = Number(resolution) * 60
+            }
+            const response = await fetch(ExChangeData.baseUrl + `/api/spot/v3/instruments/${symbolInfo.ticker.replace('/', '-')}/candles?start=${startTime}&end=${endTime}&granularity=${granularity}`, {
                 method: 'GET',
             });
             const result = await response.json();
@@ -135,7 +140,7 @@ export default {
             //     {"close":"4682.6565","high":"4969.1447","low":"4337","open":"4949","time":1542643200000,"volume":"51853.08184551"},
             //     {"close":"4682.6565","high":"4969.1447","low":"4337","open":"4949","time":1542729600000,"volume":"51853.08184551"},
             // ]);
-        }
+        // }
     },
     subscribeBars: (symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) => {
         console.warn('chartApi subscribeBars');
