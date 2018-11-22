@@ -8,7 +8,7 @@ const exchanges = [
     }
 ];
 const fetchBaseUrl = {
-    OKEX: 'https://www.excraft.com',
+    OKEX: 'https://www.okex.com',
 }
 const supportedResolutions = ["1", "3", "5", "15", "30", "60", "120", "240", "D"];
 
@@ -36,9 +36,25 @@ export default {
     onReady: async (callback) => {
         console.warn('chartApi onReady');
         ExChangeData.baseUrl = fetchBaseUrl.OKEX;
-        await setTimeout(() => {}, 0);
+        const response = await fetch(ExChangeData.baseUrl + '/api/spot/v3/instruments', {
+            method: 'GET',
+        });
+        const result = await response.json();
+        ExChangeData.instruments = result;
+        let symbols_types = [];
+        let symbols_types_map = {};
+        result.forEach(i => {
+            symbols_types_map[i.quote_currency] = true;
+        });
+        for(let name in symbols_types_map) {
+            symbols_types.push({
+                name,
+                value: name
+            })
+        }
         callback({
             exchanges,
+            symbols_types,
             supported_resolutions:  supportedResolutions,
             supports_marks: true,
             // supports_timescale_marks: true,
@@ -89,7 +105,7 @@ export default {
 			pricescale: 100000000,
 			has_intraday: true,
 			has_daily: true,
-			intraday_multipliers: [1, 3, 5, 15, 30, 60, 120, 240, 360, 720],
+			intraday_multipliers: ['1', '3', '5', '15', '30', '60', '120', '240', '360', '720'],
 			supported_resolutions:  supportedResolutions,
 			volume_precision: 8,
 			data_status: 'streaming',
@@ -110,25 +126,23 @@ export default {
             } else {
                 granularity = Number(resolution) * 60
             }
-            const response = await fetch(ExChangeData.baseUrl + `/apis/trading/v1/markets/BTCUSDT/candles?start_time=${from}&end_time=${to}&time_frame=${granularity}`, {
+            const response = await fetch(ExChangeData.baseUrl + `/api/spot/v3/instruments/${symbolInfo.ticker.replace('/', '-')}/candles?start=${startTime}&end=${endTime}&granularity=${granularity}`, {
                 method: 'GET',
             });
             const result = await response.json();
             let finalResult = [];
-            if (result.candles) {
-                finalResult = result.candles.map((i, index) => ({
-                    ...i,
-                    // time: from * 1000 + (60 * 60 *24 * 1000) * (index+0)
-                    close: Number(i.close),
-                    open: Number(i.open),
-                    high: Number(i.high),
-                    low: Number(i.low),
-                    volume: Number(i.volume),
-                    time: i.timestamp * 1000
-                }));
-            }
+            finalResult = result.map((i, index) => ({
+                ...i,
+                // time: from * 1000 + (60 * 60 *24 * 1000) * (index+0)
+                close: Number(i.close),
+                open: Number(i.open),
+                high: Number(i.high),
+                low: Number(i.low),
+                volume: Number(i.volume),
+                time: moment(i.time).valueOf()
+            }));
             let noData = finalResult.length === 0;
-            let nextTime = noData ? to * 1000 : undefined;
+            // let nextTime = noData ? to * 1000 : undefined;
             // if (noData) {
             //     nextTime = to * 1000;
             // }
@@ -136,9 +150,9 @@ export default {
             //     nextTime = data[0].time;
             // }
             // console.table(data);
-            onHistoryCallback(finalResult, {
+            onHistoryCallback(finalResult.reverse(), {
                 noData,
-                nextTime
+                // nextTime
             });
         // }
     },
@@ -173,26 +187,32 @@ export default {
         console.warn('chartApi getMarks');
         console.warn('getMarks symbolInfo', symbolInfo);
         console.table({startDate, endDate, resolution});
-        // onDataCallback(dummyMarks.map(i => ({
-        //     id: i.datetime + '',
-        //     time: moment(i.datetime).valueOf(),
-        //     color: 'yellow',
-        //     label: 'a',
-        //     // text: i.offset,
-        //     // labelFontColor: '#ff0000',
-        //     // minSize: 20
-        // })));
-        onDataCallback([
-            {
-                id: '1542878100000',
-                time: 1542878100000,
-                color: { border: '#ff0000', background: '#00ff00' },
-                label: 'a',
-                text: '<span>再来一次</span>',
-                labelFontColor: 'white',
-                minSize: 20
-            }
-        ])
+        onDataCallback(dummyMarks.map(i => ({
+            id: i.datetime + '',
+            time: moment(i.datetime).unix(),
+            color: i.direction === '空' ? 'yellow' : 'blue',
+            label: i.direction,
+            text: `
+                <div>
+                    <p>${i.offset}</p>
+                    <p>价格：${i.price}</p>
+                    <p>交易量：${i.volume}</p>
+                </div>
+            `,
+            labelFontColor: '#ff0000',
+            minSize: 20
+        })));
+        // onDataCallback([
+        //     {
+        //         id: '1542884400',
+        //         time: 1542884400,
+        //         color: { border: '#ff0000', background: '#00ff00' },
+        //         label: 'a',
+        //         text: '<span>再来一次</span>',
+        //         labelFontColor: 'white',
+        //         minSize: 20
+        //     }
+        // ])
     },
     // getTimescaleMarks: (symbolInfo, startDate, endDate, onDataCallback, resolution) => {
     //     console.warn('chartApi getTimescaleMarks');
