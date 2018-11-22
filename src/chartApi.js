@@ -12,6 +12,8 @@ const fetchBaseUrl = {
 }
 const supportedResolutions = ["1", "3", "5", "15", "30", "60", "120", "240", "D"];
 
+const SingleTimeDataLimit = 200;
+
 class ExChangeData {
     _instruments = [];
     _baseUrl = '';
@@ -165,25 +167,11 @@ export default {
         console.warn('chartApi unsubscribeBars');
         console.table({subscriberUID});
     },
-    // calculateHistoryDepth: (resolution, resolutionBack, intervalBack) => {
-    //     console.warn('chartApi calculateHistoryDepth');
-    //     console.table({resolution, resolutionBack, intervalBack});
-    // },
-    // calculateHistoryDepth: (resolution, resolutionBack, intervalBack) => {
-	// 	//optional
-	// 	console.log('=====calculateHistoryDepth running')
-	// 	// while optional, this makes sure we request 24 hours of minute data at a time
-	// 	// CryptoCompare's minute data endpoint will throw an error if we request data beyond 7 days in the past, and return no data
-	// 	return resolution < 60 ? {resolutionBack: 'D', intervalBack: '1'} : undefined
-	// },
+    calculateHistoryDepth: (resolution, resolutionBack, intervalBack) => {
+        console.warn('chartApi calculateHistoryDepth');
+        console.table({resolution, resolutionBack, intervalBack});
+    },
     getMarks: (symbolInfo, startDate, endDate, onDataCallback, resolution) => {
-        // - id`: unique mark ID. It will be passed to a [respective callback](Widget-Methods#subscribeevent-callback) when user clicks on a mark
-        // - `time`: unix time, UTC
-        // - `color`: `red` | `green` | `blue` | `yellow` | `{ border: '#ff0000', background: '#00ff00' }`
-        // - `text`: mark popup text. HTML supported
-        // - `label`: a letter to be printed on a mark. Single character
-        // - `labelFontColor`: color of a letter on a mark
-        // - `minSize`: minimum mark size (diameter, pixels)
         console.warn('chartApi getMarks');
         console.warn('getMarks symbolInfo', symbolInfo);
         console.table({startDate, endDate, resolution});
@@ -202,31 +190,7 @@ export default {
             labelFontColor: '#ff0000',
             minSize: 20
         })));
-        // onDataCallback([
-        //     {
-        //         id: '1542884400',
-        //         time: 1542884400,
-        //         color: { border: '#ff0000', background: '#00ff00' },
-        //         label: 'a',
-        //         text: '<span>再来一次</span>',
-        //         labelFontColor: 'white',
-        //         minSize: 20
-        //     }
-        // ])
     },
-    // getTimescaleMarks: (symbolInfo, startDate, endDate, onDataCallback, resolution) => {
-    //     console.warn('chartApi getTimescaleMarks');
-    //     console.warn('getTimescaleMarks symbolInfo', symbolInfo);
-    //     console.table({startDate, endDate, resolution});
-    //     // onDataCallback(dummyMarks.map(i => ({
-    //     //     id: i.datetime + '',
-    //     //     time: moment(i.datetime).valueOf(),
-    //     //     color: i.offset === '平仓' ? '#ff0000' : '#00ff00',
-    //     //     label: 'a',
-    //     //     tooltip: ['white'],
-    //     //     // minSize: 20
-    //     // })));
-    // },
     getServerTime: (callback) => {
         console.warn('chartApi getServerTime');
         callback();
