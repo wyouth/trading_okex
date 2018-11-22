@@ -16,22 +16,29 @@ const SingleTimeDataLimit = 200;
 
 const getCandles = async ({ ticker, start, end, granularity }) => {
     const response = await fetch(
+        // https://www.okex.com/v2/market/index/kLine?symbol=f_usd_btc&type=1min&contractType=this_week&limit=1000&coinVol=0
         ExChangeData.baseUrl +
-            `/api/spot/v3/instruments/${ticker}/candles?start=${start}&end=${end}&granularity=${granularity}`,
+            // `/api/spot/v3/instruments/${ticker}/candles?start=${start}&end=${end}&granularity=${granularity}`,
+            `/v2/market/index/kLine?symbol=f_usd_btc&1min&contractType=this_week&limit=1000&coinVol=0`,
         {
             method: 'GET'
         }
     );
     const result = await response.json();
-    return result.map((i, index) => ({
-        ...i,
-        // time: from * 1000 + (60 * 60 *24 * 1000) * (index+0)
-        close: Number(i.close),
-        open: Number(i.open),
-        high: Number(i.high),
-        low: Number(i.low),
-        volume: Number(i.volume),
-        time: moment(i.time).valueOf()
+    return result.data.map((i, index) => ({
+        // ...i,
+        // close: Number(i.close),
+        // open: Number(i.open),
+        // high: Number(i.high),
+        // low: Number(i.low),
+        // volume: Number(i.volume),
+        // time: moment(i.time).valueOf()
+        time: i[0],
+        open: i[1],
+        high: i[2],
+        low: i[3],
+        close: i[4],
+        volume: i[5],
     }));
 };
 
@@ -174,7 +181,7 @@ export default {
         let finalResult = [];
         result.forEach(i => (finalResult = finalResult.concat(i)));
         let noData = finalResult.length === 0;
-        const candles = finalResult.reverse();
+        const candles = finalResult;
         console.warn('finalResult', finalResult);
         let nextTime = noData ? to * 1000 : undefined;
         if (noData) {
