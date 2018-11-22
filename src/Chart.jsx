@@ -9,7 +9,7 @@ class Chart extends Component {
                 debug: true,
                 symbol: 'BTC/USDT',
                 datafeed: chartApi,
-                interval: '1',
+                interval: '15',
                 container_id: 'tv_chart_container',
                 library_path: '/assets/charting_library/',
                 timeframe: '1D',
@@ -23,7 +23,6 @@ class Chart extends Component {
                 user_id: 'public_user_id',
                 fullscreen: true,
                 autosize: false,
-                studies_overrides: {},
                 overrides: {
                     "mainSeriesProperties.showCountdown": true,
                     'paneProperties.background': '#131722',

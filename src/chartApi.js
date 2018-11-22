@@ -186,7 +186,7 @@ export default {
         // console.table(data);
         onHistoryCallback(candles, {
             noData,
-            nextTime
+            // nextTime
         });
         // }
     },
