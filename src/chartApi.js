@@ -1,4 +1,5 @@
 import moment from 'moment';
+import dummyMarks from './lib/marks';
 const exchanges = [
     {
         name: 'OKEX',
@@ -7,7 +8,7 @@ const exchanges = [
     }
 ];
 const fetchBaseUrl = {
-    OKEX: 'https://www.okex.com',
+    OKEX: 'https://www.excraft.com',
 }
 const supportedResolutions = ["1", "3", "5", "15", "30", "60", "120", "240", "D"];
 
@@ -35,25 +36,12 @@ export default {
     onReady: async (callback) => {
         console.warn('chartApi onReady');
         ExChangeData.baseUrl = fetchBaseUrl.OKEX;
-        const response = await fetch(ExChangeData.baseUrl + '/api/spot/v3/instruments', {
-            method: 'GET',
-        });
-        const result = await response.json();
-        ExChangeData.instruments = result;
-        let symbols_types = [];
-        let symbols_types_map = {};
-        result.forEach(i => {
-            symbols_types_map[i.quote_currency] = true;
-        });
-        for(let name in symbols_types_map) {
-            symbols_types.push({
-                name,
-                value: name
-            })
-        }
+        await setTimeout(() => {}, 0);
         callback({
             exchanges,
-            symbols_types
+            supported_resolutions:  supportedResolutions,
+            supports_marks: true,
+            // supports_timescale_marks: true,
         });
     },
     searchSymbols: async (userInput, exchange, symbolType, onResultReadyCallback) => {
@@ -92,7 +80,7 @@ export default {
         onSymbolResolvedCallback({
             name: symbolName,
 			description: '',
-			type: 'crypto',
+			type: 'bitcoin',
 			session: '24x7',
 			timezone: 'Etc/UTC',
 			ticker: symbolName,
@@ -100,8 +88,9 @@ export default {
 			minmov: 1,
 			pricescale: 100000000,
 			has_intraday: true,
-			intraday_multipliers: ['1', '3', '5', '15', '30', '60', '120', '240', '360', '720'],
-			supported_resolution:  supportedResolutions,
+			has_daily: true,
+			intraday_multipliers: [1, 3, 5, 15, 30, 60, 120, 240, 360, 720],
+			supported_resolutions:  supportedResolutions,
 			volume_precision: 8,
 			data_status: 'streaming',
         });
@@ -113,38 +102,50 @@ export default {
         // if (firstDataRequest) {
             const startTime = new Date((from) * 1000).toISOString();
             const endTime = new Date((to) * 1000).toISOString();
+            // const startTime = moment("2018-11-18 04:40:00").format('YYYY-MM-DDTHH:mm:ss[Z]');
+            // const endTime = moment("2018-11-19 05:48:00").format('YYYY-MM-DDTHH:mm:ss[Z]');
             let granularity;
             if (resolution === 'D') {
                 granularity = 86400;
             } else {
                 granularity = Number(resolution) * 60
             }
-            const response = await fetch(ExChangeData.baseUrl + `/api/spot/v3/instruments/${symbolInfo.ticker.replace('/', '-')}/candles?start=${startTime}&end=${endTime}&granularity=${granularity}`, {
+            const response = await fetch(ExChangeData.baseUrl + `/apis/trading/v1/markets/BTCUSDT/candles?start_time=${from}&end_time=${to}&time_frame=${granularity}`, {
                 method: 'GET',
             });
             const result = await response.json();
-            let finalResult = result.map((i, index) => ({
-                ...i,
-                // time: from * 1000 + (60 * 60 *24 * 1000) * (index+0)
-                time: moment(i.time).valueOf()
-            }));
-            var data = finalResult.reverse();
+            let finalResult = [];
+            if (result.candles) {
+                finalResult = result.candles.map((i, index) => ({
+                    ...i,
+                    // time: from * 1000 + (60 * 60 *24 * 1000) * (index+0)
+                    close: Number(i.close),
+                    open: Number(i.open),
+                    high: Number(i.high),
+                    low: Number(i.low),
+                    volume: Number(i.volume),
+                    time: i.timestamp * 1000
+                }));
+            }
+            let noData = finalResult.length === 0;
+            let nextTime = noData ? to * 1000 : undefined;
+            // if (noData) {
+            //     nextTime = to * 1000;
+            // }
+            // if (!noData && ((from * 1000 - data[0].time) > granularity * 1000) ) {
+            //     nextTime = data[0].time;
+            // }
             // console.table(data);
-            onHistoryCallback(data, {
-                noData: false
+            onHistoryCallback(finalResult, {
+                noData,
+                nextTime
             });
-            // onHistoryCallback(finalResult);
-            // return finalResult;
-
-            // onHistoryCallback([
-            //     {"close":"4682.6565","high":"4969.1447","low":"4337","open":"4949","time":1542643200000,"volume":"51853.08184551"},
-            //     {"close":"4682.6565","high":"4969.1447","low":"4337","open":"4949","time":1542729600000,"volume":"51853.08184551"},
-            // ]);
         // }
     },
     subscribeBars: (symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) => {
         console.warn('chartApi subscribeBars');
-        console.table({symbolInfo, resolution, subscriberUID});
+        console.warn('subscribeBars symbolInfo', symbolInfo);
+        console.table({resolution, subscriberUID});
     },
     unsubscribeBars: (subscriberUID) => {
         console.warn('chartApi unsubscribeBars');
@@ -162,13 +163,50 @@ export default {
 	// 	return resolution < 60 ? {resolutionBack: 'D', intervalBack: '1'} : undefined
 	// },
     getMarks: (symbolInfo, startDate, endDate, onDataCallback, resolution) => {
+        // - id`: unique mark ID. It will be passed to a [respective callback](Widget-Methods#subscribeevent-callback) when user clicks on a mark
+        // - `time`: unix time, UTC
+        // - `color`: `red` | `green` | `blue` | `yellow` | `{ border: '#ff0000', background: '#00ff00' }`
+        // - `text`: mark popup text. HTML supported
+        // - `label`: a letter to be printed on a mark. Single character
+        // - `labelFontColor`: color of a letter on a mark
+        // - `minSize`: minimum mark size (diameter, pixels)
         console.warn('chartApi getMarks');
-        console.table({symbolInfo, startDate, endDate, resolution});
+        console.warn('getMarks symbolInfo', symbolInfo);
+        console.table({startDate, endDate, resolution});
+        // onDataCallback(dummyMarks.map(i => ({
+        //     id: i.datetime + '',
+        //     time: moment(i.datetime).valueOf(),
+        //     color: 'yellow',
+        //     label: 'a',
+        //     // text: i.offset,
+        //     // labelFontColor: '#ff0000',
+        //     // minSize: 20
+        // })));
+        onDataCallback([
+            {
+                id: '1542878100000',
+                time: 1542878100000,
+                color: { border: '#ff0000', background: '#00ff00' },
+                label: 'a',
+                text: '<span>再来一次</span>',
+                labelFontColor: 'white',
+                minSize: 20
+            }
+        ])
     },
-    getTimescaleMarks: (symbolInfo, startDate, endDate, onDataCallback, resolution) => {
-        console.warn('chartApi getTimescaleMarks');
-        console.table({symbolInfo, startDate, endDate, resolution});
-    },
+    // getTimescaleMarks: (symbolInfo, startDate, endDate, onDataCallback, resolution) => {
+    //     console.warn('chartApi getTimescaleMarks');
+    //     console.warn('getTimescaleMarks symbolInfo', symbolInfo);
+    //     console.table({startDate, endDate, resolution});
+    //     // onDataCallback(dummyMarks.map(i => ({
+    //     //     id: i.datetime + '',
+    //     //     time: moment(i.datetime).valueOf(),
+    //     //     color: i.offset === '平仓' ? '#ff0000' : '#00ff00',
+    //     //     label: 'a',
+    //     //     tooltip: ['white'],
+    //     //     // minSize: 20
+    //     // })));
+    // },
     getServerTime: (callback) => {
         console.warn('chartApi getServerTime');
         callback();

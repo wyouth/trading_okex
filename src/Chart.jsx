@@ -5,7 +5,7 @@ import chartApi from './chartApi';
 class Chart extends Component {
     componentDidMount() {
         window.TradingView.onready(function() {
-            var widget = (window.tvWidget = new window.TradingView.widget({
+            var widget = window.tvWidget = new window.TradingView.widget({
                 debug: true,
                 symbol: 'BTC/USDT',
                 datafeed: chartApi,
@@ -25,7 +25,7 @@ class Chart extends Component {
                 autosize: false,
                 studies_overrides: {},
                 overrides: {
-                    // "mainSeriesProperties.showCountdown": true,
+                    "mainSeriesProperties.showCountdown": true,
                     'paneProperties.background': '#131722',
                     'paneProperties.vertGridProperties.color': '#363c4e',
                     'paneProperties.horzGridProperties.color': '#363c4e',
@@ -34,7 +34,7 @@ class Chart extends Component {
                     'mainSeriesProperties.candleStyle.wickUpColor': '#336854',
                     'mainSeriesProperties.candleStyle.wickDownColor': '#7f323f'
                 }
-            }));
+            });
         });
     }
     render() {
