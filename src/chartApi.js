@@ -1,5 +1,3 @@
-import moment from 'moment';
-import dummyMarks from './lib/marks.json';
 const exchanges = [
     {
         name: 'OKEX',
@@ -7,9 +5,6 @@ const exchanges = [
         desc: 'OKEX'
     }
 ];
-const fetchBaseUrl = {
-    OKEX: 'https://www.okex.com'
-};
 const supportedResolutions = ['1', '3', '5', '15', '30', '60', '120', '240', 'D'];
 const getCandles = async ({ ticker, from, to, type }) => {
     const response = await fetch(
@@ -169,7 +164,6 @@ export default {
             from: from * 1000,
             to: to * 1000
         });
-        let noData = finalResult.length === 0;
         // const candles = finalResult;
         // console.warn('finalResult', finalResult);
         // let nextTime = noData ? to * 1000 : undefined;
@@ -180,10 +174,24 @@ export default {
         //     nextTime = candles[0].time;
         // }
         // console.table(data);
-        onHistoryCallback(finalResult, {
-            noData
-            // nextTime
-        });
+        let meta = {
+            noData: false
+        };
+        if (finalResult.length === 0) {
+            meta = {
+                noData: true,
+                nextTime: to
+            }
+        } else {
+            if (finalResult[0].time > to * 1000) {
+                meta = {
+                    noData: true,
+                    nextTime: finalResult[finalResult.length - 1].time / 1000
+                }
+            }
+        }
+        console.table(meta);
+        onHistoryCallback(meta.noData ? [] : finalResult, meta);
         // }
     },
     subscribeBars: (symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) => {
@@ -203,23 +211,23 @@ export default {
         console.warn('chartApi getMarks');
         console.warn('getMarks symbolInfo', symbolInfo);
         console.table({ startDate, endDate, resolution });
-        onDataCallback(
-            dummyMarks.map(i => ({
-                id: i.datetime + '',
-                time: moment(i.datetime).unix(),
-                color: i.direction === '空' ? 'yellow' : 'blue',
-                label: i.direction,
-                text: `
-                <div>
-                    <p>${i.offset}</p>
-                    <p>价格：${i.price}</p>
-                    <p>交易量：${i.volume}</p>
-                </div>
-            `,
-                labelFontColor: '#ff0000',
-                minSize: 20
-            }))
-        );
+        // onDataCallback(
+        //     dummyMarks.map(i => ({
+        //         id: i.datetime + '',
+        //         time: moment(i.datetime).unix(),
+        //         color: i.direction === '空' ? 'yellow' : 'blue',
+        //         label: i.direction,
+        //         text: `
+        //         <div>
+        //             <p>${i.offset}</p>
+        //             <p>价格：${i.price}</p>
+        //             <p>交易量：${i.volume}</p>
+        //         </div>
+        //     `,
+        //         labelFontColor: 'white',
+        //         minSize: 14
+        //     }))
+        // );
     },
     getServerTime: callback => {
         console.warn('chartApi getServerTime');
