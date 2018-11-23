@@ -5,13 +5,13 @@ import chartApi from './chartApi';
 class Chart extends Component {
     componentDidMount() {
         window.TradingView.onready(function() {
-            window.tvWidget = new window.TradingView.widget({
-                debug: true,
+            new window.TradingView.widget({
+                debug: false,
                 symbol: 'BTC/USDT',
                 datafeed: chartApi,
                 interval: '15',
                 container_id: 'tv_chart_container',
-                library_path: '/assets/charting_library/',
+                library_path: 'assets/charting_library/',
                 // timeframe: '1D',
                 timezone: 'Asia/Shanghai',
                 locale: 'zh',

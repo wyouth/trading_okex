@@ -10,7 +10,7 @@ const getCandles = async ({ ticker, from, to, type }) => {
     const response = await fetch(
         // https://www.okex.com/v2/market/index/kLine?symbol=f_usd_btc&type=1min&contractType=this_week&limit=1000&coinVol=0
             // `/api/spot/v3/instruments/${ticker}/candles?start=${start}&end=${end}&granularity=${granularity}`,
-            `https://www.okex.com/v2/spot/markets/kline?symbol=${ticker}&type=${type}&coinVol=0&since=${from}&to=${to}`,
+            `https://www.okex.com/v2/spot/markets/kline?symbol=${ticker}&type=${type}&coinVol=0`,
         {
             method: 'GET'
         }
@@ -131,62 +131,23 @@ export default {
                 type = interval / 60 + 'hour';
             }
         }
-        // if (firstDataRequest) {
-        // let granularity;
-        // if (resolution === 'D') {
-        //     granularity = 86400;
-        // } else {
-        //     granularity = Number(resolution) * 60;
-        // }
-        // const loopTimes = Math.ceil((to - from) / granularity / SingleTimeDataLimit);
-        // let asyncArrs = new Array(loopTimes).fill(0);
-        // console.log(asyncArrs);
-        // const result = await Promise.all(
-        //     asyncArrs.map((_, index) => {
-        //         const start = to - granularity * (index + 1) * SingleTimeDataLimit;
-        //         const end = to - granularity * index * SingleTimeDataLimit;
-        //         console.log('start', start);
-        //         console.log('end', end);
-        //         return getCandles({
-        //             ticker,
-        //             granularity,
-        //             start: new Date(start < from ? from * 1000 : start * 1000).toISOString(),
-        //             end: new Date(end * 1000).toISOString()
-        //         });
-        //     })
-        // );
-        // console.warn('result', result);
-        // let finalResult = [];
-        // result.forEach(i => (finalResult = finalResult.concat(i)));
         let finalResult = await getCandles({
             ticker: symbolInfo.ticker.replace('/', '_').toLowerCase(),
             type,
-            from: from * 1000,
-            to: to * 1000
         });
-        // const candles = finalResult;
-        // console.warn('finalResult', finalResult);
-        // let nextTime = noData ? to * 1000 : undefined;
-        // if (noData) {
-        //     nextTime = to * 1000;
-        // }
-        // if (!noData && from * 1000 - candles[0].time > granularity * 1000) {
-        //     nextTime = candles[0].time;
-        // }
-        // console.table(data);
         let meta = {
             noData: false
         };
         if (finalResult.length === 0) {
             meta = {
                 noData: true,
-                nextTime: to
+                // nextTime: to
             }
         } else {
             if (finalResult[0].time > to * 1000) {
                 meta = {
                     noData: true,
-                    nextTime: finalResult[finalResult.length - 1].time / 1000
+                    // nextTime: finalResult[finalResult.length - 1].time / 1000
                 }
             }
         }
@@ -207,27 +168,35 @@ export default {
         console.warn('chartApi calculateHistoryDepth');
         console.table({ resolution, resolutionBack, intervalBack });
     },
-    getMarks: (symbolInfo, startDate, endDate, onDataCallback, resolution) => {
+    getMarks: async (symbolInfo, startDate, endDate, onDataCallback, resolution) => {
         console.warn('chartApi getMarks');
         console.warn('getMarks symbolInfo', symbolInfo);
         console.table({ startDate, endDate, resolution });
-        // onDataCallback(
-        //     dummyMarks.map(i => ({
-        //         id: i.datetime + '',
-        //         time: moment(i.datetime).unix(),
-        //         color: i.direction === '空' ? 'yellow' : 'blue',
-        //         label: i.direction,
-        //         text: `
-        //         <div>
-        //             <p>${i.offset}</p>
-        //             <p>价格：${i.price}</p>
-        //             <p>交易量：${i.volume}</p>
-        //         </div>
-        //     `,
-        //         labelFontColor: 'white',
-        //         minSize: 14
-        //     }))
-        // );
+        try {
+            // const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8888`);
+            const response = await fetch(`http://localhost:8888`);
+            const result = await response.json();
+            onDataCallback(
+                result.map(i => ({
+                    id: i.datetime + '',
+                    time: Math.ceil(new Date(i.datetime).getTime() / 1000),
+                    color: i.direction === '空' ? 'yellow' : 'blue',
+                    label: i.direction,
+                    text: `
+                    <div>
+                        <p>${i.offset}</p>
+                        <p>价格：${i.price}</p>
+                        <p>交易量：${i.volume}</p>
+                    </div>
+                `,
+                    labelFontColor: 'white',
+                    minSize: 14
+                }))
+            );
+        } catch (e) {
+            console.error('getMarks catch error', e);
+        }
+
     },
     getServerTime: callback => {
         console.warn('chartApi getServerTime');
