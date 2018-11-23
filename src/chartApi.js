@@ -5,7 +5,7 @@ const exchanges = [
         desc: 'OKEX'
     }
 ];
-const supportedResolutions = ['1', '3', '5', '15', '30', '60', '120', '240', 'D'];
+const supportedResolutions = ['1', '3', '5', '15', '30', '60', '120', '240', 'D', 'W'];
 const getCandles = async ({ ticker, from, to, type }) => {
     const response = await fetch(
         // https://www.okex.com/v2/market/index/kLine?symbol=f_usd_btc&type=1min&contractType=this_week&limit=1000&coinVol=0
@@ -16,6 +16,7 @@ const getCandles = async ({ ticker, from, to, type }) => {
         }
     );
     const result = await response.json();
+    const isDay = type === 'day';
     return result.data.map(i => ({
         // ...i,
         // close: Number(i.close),
@@ -101,7 +102,7 @@ export default {
         onSymbolResolvedCallback({
             name: symbolName,
             description: '',
-            type: 'bitcoin',
+            type: 'crypto',
             session: '24x7',
             timezone: 'Etc/UTC',
             ticker: symbolName,
@@ -110,7 +111,8 @@ export default {
             pricescale: 100000000,
             has_intraday: true,
             has_daily: true,
-            intraday_multipliers: ['1', '3', '5', '15', '30', '60', '120', '240', '360', '720'],
+            has_weekly_and_monthly: true,
+            intraday_multipliers: ['1', '3', '5', '15', '30', '60', '120', '240'],
             supported_resolutions: supportedResolutions,
             volume_precision: 8,
             data_status: 'streaming'
@@ -123,9 +125,11 @@ export default {
         let type;
         if (resolution === 'D') {
             type = 'day';
+        } else if(resolution === 'W') {
+            type= 'week';
         } else {
             const interval = Number(resolution);
-            if (interval <= 60) {
+            if (interval < 60) {
                 type = interval + 'min';
             } else {
                 type = interval / 60 + 'hour';
@@ -153,6 +157,11 @@ export default {
         }
         console.table(meta);
         onHistoryCallback(meta.noData ? [] : finalResult, meta);
+        // if (resolution === 'D') {
+
+        // } else {
+
+        // }
         // }
     },
     subscribeBars: (symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) => {
@@ -167,6 +176,7 @@ export default {
     calculateHistoryDepth: (resolution, resolutionBack, intervalBack) => {
         console.warn('chartApi calculateHistoryDepth');
         console.table({ resolution, resolutionBack, intervalBack });
+        // return resolution === 'D' ? {resolutionBack: 'M', intervalBack: 3} : undefined;
     },
     getMarks: async (symbolInfo, startDate, endDate, onDataCallback, resolution) => {
         console.warn('chartApi getMarks');
@@ -200,6 +210,6 @@ export default {
     },
     getServerTime: callback => {
         console.warn('chartApi getServerTime');
-        callback();
+        // callback();
     }
 };

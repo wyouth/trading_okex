@@ -12,7 +12,7 @@ class Chart extends Component {
                 interval: '15',
                 container_id: 'tv_chart_container',
                 library_path: 'assets/charting_library/',
-                // timeframe: '1D',
+                // timeframe: '1M',
                 timezone: 'Asia/Shanghai',
                 locale: 'zh',
                 disabled_features: ['use_localstorage_for_settings'],
