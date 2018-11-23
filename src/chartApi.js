@@ -1,5 +1,5 @@
 import moment from 'moment';
-import dummyMarks from './lib/marks';
+import dummyMarks from './lib/marks.json';
 const exchanges = [
     {
         name: 'OKEX',
@@ -11,12 +11,11 @@ const fetchBaseUrl = {
     OKEX: 'https://www.okex.com'
 };
 const supportedResolutions = ['1', '3', '5', '15', '30', '60', '120', '240', 'D'];
-
-const getCandles = async ({ ticker, from, to, resolution }) => {
+const getCandles = async ({ ticker, from, to, type }) => {
     const response = await fetch(
         // https://www.okex.com/v2/market/index/kLine?symbol=f_usd_btc&type=1min&contractType=this_week&limit=1000&coinVol=0
             // `/api/spot/v3/instruments/${ticker}/candles?start=${start}&end=${end}&granularity=${granularity}`,
-            `https://www.okex.com/v2/market/index/kLine?symbol=f_usd_btc&1min&contractType=this_week&limit=1000&coinVol=0`,
+            `https://www.okex.com/v2/spot/markets/kline?symbol=${ticker}&type=${type}&coinVol=0&since=${from}&to=${to}`,
         {
             method: 'GET'
         }
@@ -30,20 +29,20 @@ const getCandles = async ({ ticker, from, to, resolution }) => {
         // low: Number(i.low),
         // volume: Number(i.volume),
         // time: moment(i.time).valueOf()
-        time: i[0],
-        open: i[1],
-        high: i[2],
-        low: i[3],
-        close: i[4],
-        volume: i[5]
+        time: i.time,
+        open: Number(i.open),
+        high: Number(i.high),
+        low: Number(i.low),
+        close: Number(i.close),
+        volume: Number(i.volume),
     }));
 };
 
-let instruments: any[] = [];
+let instruments = [];
 export default {
     onReady: async callback => {
         console.warn('chartApi onReady');
-        const response = await fetch('https://www.okex.com//api/spot/v3/instruments', {
+        const response = await fetch('https://www.okex.com/api/spot/v3/instruments', {
             method: 'GET'
         });
         const result = await response.json();
@@ -126,8 +125,18 @@ export default {
         console.warn('chartApi getBars');
         console.warn('getBars symbolInfo', symbolInfo);
         console.table({ resolution, from, to, firstDataRequest });
+        let type;
+        if (resolution === 'D') {
+            type = 'day';
+        } else {
+            const interval = Number(resolution);
+            if (interval <= 60) {
+                type = interval + 'min';
+            } else {
+                type = interval / 60 + 'hour';
+            }
+        }
         // if (firstDataRequest) {
-        const ticker = symbolInfo.ticker.replace('/', '-');
         // let granularity;
         // if (resolution === 'D') {
         //     granularity = 86400;
@@ -155,10 +164,10 @@ export default {
         // let finalResult = [];
         // result.forEach(i => (finalResult = finalResult.concat(i)));
         let finalResult = await getCandles({
-            ticker,
-            resolution,
-            from,
-            to
+            ticker: symbolInfo.ticker.replace('/', '_').toLowerCase(),
+            type,
+            from: from * 1000,
+            to: to * 1000
         });
         let noData = finalResult.length === 0;
         // const candles = finalResult;
