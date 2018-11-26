@@ -158,12 +158,6 @@ export default config => {
             }
             console.table(meta);
             onHistoryCallback(meta.noData ? [] : finalResult, meta);
-            // if (resolution === 'D') {
-
-            // } else {
-
-            // }
-            // }
         },
         subscribeBars: (symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) => {
             console.warn('chartApi subscribeBars');
@@ -185,7 +179,7 @@ export default config => {
             console.table({ startDate, endDate, resolution });
             try {
                 // const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8888`);
-                const response = await fetch(`${config.host}:${config.port}`);
+                const response = await fetch(`${config.host}:${config.port}/info`);
                 const result = await response.json();
                 onDataCallback(
                     result.map(i => ({

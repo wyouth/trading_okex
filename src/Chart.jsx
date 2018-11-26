@@ -12,7 +12,7 @@ class Chart extends Component {
             datafeed: chartApi(config),
             interval: '15',
             container_id: 'tv_chart_container',
-            library_path: 'assets/charting_library/',
+            library_path: '/static/charting_library/',
             // timeframe: '1M',
             timezone: 'Asia/Shanghai',
             locale: 'zh',
