@@ -2,8 +2,8 @@
     "title": "量化交易系统",
     "expires": 86400,
     "accounts": {
-        "admin": "2L$$Z)#Q2]@>}4/72N79664#"
+        "admin": "b123456c"
     },
-    "host": "http://47.75.36.141",
-    "port": "8888"
+    "host": "http://127.0.0.1",
+    "port": "80"
 }
