@@ -14,6 +14,9 @@ export default config => {
             console.warn('chartApi onReady');
             const response = await fetch(`${config.host}:${config.port}/proxy`, {
                 method: 'POST',
+                headers: new Headers({
+                    'Content-Type': 'application/json'
+                }),
                 body: JSON.stringify({
                     url: 'https://www.okex.com/api/spot/v3/instruments'
                 })
@@ -119,6 +122,9 @@ export default config => {
                 `${config.host}:${config.port}/proxy`,
                 {
                     method: 'POST',
+                    headers: new Headers({
+                        'Content-Type': 'application/json'
+                    }),
                     body: JSON.stringify({
                         url: `https://www.okex.com/v2/spot/markets/kline?symbol=${ticker}&type=${type}&coinVol=0`
                     })
