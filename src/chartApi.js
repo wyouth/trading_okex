@@ -6,40 +6,17 @@ const exchanges = [
     }
 ];
 const supportedResolutions = ['1', '3', '5', '15', '30', '60', '120', '240', 'D', 'W'];
-const getCandles = async ({ ticker, from, to, type }) => {
-    const response = await fetch(
-        // https://www.okex.com/v2/market/index/kLine?symbol=f_usd_btc&type=1min&contractType=this_week&limit=1000&coinVol=0
-            // `/api/spot/v3/instruments/${ticker}/candles?start=${start}&end=${end}&granularity=${granularity}`,
-            `https://www.okex.com/v2/spot/markets/kline?symbol=${ticker}&type=${type}&coinVol=0`,
-        {
-            method: 'GET'
-        }
-    );
-    const result = await response.json();
-    return result.data.map(i => ({
-        // ...i,
-        // close: Number(i.close),
-        // open: Number(i.open),
-        // high: Number(i.high),
-        // low: Number(i.low),
-        // volume: Number(i.volume),
-        // time: moment(i.time).valueOf()
-        time: i.time,
-        open: Number(i.open),
-        high: Number(i.high),
-        low: Number(i.low),
-        close: Number(i.close),
-        volume: Number(i.volume),
-    }));
-};
 
 let instruments = [];
 export default config => {
     return {
         onReady: async callback => {
             console.warn('chartApi onReady');
-            const response = await fetch('https://www.okex.com/api/spot/v3/instruments', {
-                method: 'GET'
+            const response = await fetch(`${config.host}:${config.port}/proxy`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    url: 'https://www.okex.com/api/spot/v3/instruments'
+                })
             });
             const result = await response.json();
             instruments = result;
@@ -125,8 +102,8 @@ export default config => {
             let type;
             if (resolution === 'D') {
                 type = 'day';
-            } else if(resolution === 'W') {
-                type= 'week';
+            } else if (resolution === 'W') {
+                type = 'week';
             } else {
                 const interval = Number(resolution);
                 if (interval < 60) {
@@ -135,24 +112,48 @@ export default config => {
                     type = interval / 60 + 'hour';
                 }
             }
-            let finalResult = await getCandles({
-                ticker: symbolInfo.ticker.replace('/', '_').toLowerCase(),
-                type,
-            });
+            const ticker = symbolInfo.ticker.replace('/', '_').toLowerCase();
+            const response = await fetch(
+                // https://www.okex.com/v2/market/index/kLine?symbol=f_usd_btc&type=1min&contractType=this_week&limit=1000&coinVol=0
+                // `/api/spot/v3/instruments/${ticker}/candles?start=${start}&end=${end}&granularity=${granularity}`,
+                `${config.host}:${config.port}/proxy`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        url: `https://www.okex.com/v2/spot/markets/kline?symbol=${ticker}&type=${type}&coinVol=0`
+                    })
+                }
+            );
+            const result = await response.json();
+            let finalResult = result.data.map(i => ({
+                // ...i,
+                // close: Number(i.close),
+                // open: Number(i.open),
+                // high: Number(i.high),
+                // low: Number(i.low),
+                // volume: Number(i.volume),
+                // time: moment(i.time).valueOf()
+                time: i.time,
+                open: Number(i.open),
+                high: Number(i.high),
+                low: Number(i.low),
+                close: Number(i.close),
+                volume: Number(i.volume)
+            }));
             let meta = {
                 noData: false
             };
             if (finalResult.length === 0) {
                 meta = {
-                    noData: true,
+                    noData: true
                     // nextTime: to
-                }
+                };
             } else {
                 if (finalResult[0].time > to * 1000) {
                     meta = {
-                        noData: true,
+                        noData: true
                         // nextTime: finalResult[finalResult.length - 1].time / 1000
-                    }
+                    };
                 }
             }
             console.table(meta);
@@ -206,11 +207,10 @@ export default config => {
             } catch (e) {
                 console.error('getMarks catch error', e);
             }
-
         },
         getServerTime: callback => {
             console.warn('chartApi getServerTime');
             // callback();
         }
-    }
+    };
 };
