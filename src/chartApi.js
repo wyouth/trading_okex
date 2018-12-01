@@ -9,7 +9,7 @@ let currentExchange = 'OKEX';
  * @param {json} config 从本地读的json配置
  * @param {number} limit 最大条数
  */
-const getBarsData = async (ticker, resolution, config, limit = 2000, from ,to) => {
+const getBarsData = async (ticker, resolution, config, limit = 2000, from, to) => {
     console.warn('getBarsData');
     const exchange = ticker.split('=>')[1];
     const symbol = config.tickers[exchange][ticker.split('=>')[0]];
@@ -134,6 +134,7 @@ export default config => {
     return {
         onReady: async callback => {
             console.warn('chartApi onReady');
+            await setTimeout(() => {}, 0);
             callback({
                 exchanges: config.exchanges,
                 // symbols_types: config.strategies,
@@ -141,6 +142,7 @@ export default config => {
                 supports_marks: true
                 // supports_timescale_marks: true,
             });
+            console.log(document.querySelector('input.symbol-edit'));
         },
         searchSymbols: async (userInput, exchange, symbolType, onResultReadyCallback) => {
             console.warn('chartApi searchSymbols ');
@@ -161,7 +163,7 @@ export default config => {
                             type: 'bitcoin'
                         });
                     }
-                })
+                });
                 onResultReadyCallback(arr);
             }
         },
@@ -198,7 +200,7 @@ export default config => {
             } else if (resolution === 'D') {
                 granularity = 86400;
             } else {
-                granularity = Number(resolution) * 60
+                granularity = Number(resolution) * 60;
             }
             const limit = config.klineLimit[currentExchange];
             const loopTimes = Math.ceil((to - from) / granularity / limit);
@@ -250,7 +252,7 @@ export default config => {
             } else if (resolution === 'D') {
                 granularity = 86400;
             } else {
-                granularity = Number(resolution) * 60
+                granularity = Number(resolution) * 60;
             }
             const from = to - granularity;
             const finalResult = await getBarsData(symbolInfo.ticker, resolution, config, 1, from, to);
@@ -273,13 +275,17 @@ export default config => {
             console.table({ startDate, endDate, resolution });
             try {
                 // const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8888`);
-                const response = await fetch(`${config.host}:${config.port}/info?name=${symbolInfo.ticker.split('=>')[0]}`);
+                const response = await fetch(
+                    `${config.host}:${config.port}/info?name=${symbolInfo.ticker.split('=>')[0]}`
+                );
                 const result = await response.json();
                 console.log('getMarks result', result);
                 if (Array.isArray(result)) {
                     onDataCallback(
                         result.reverse().map(i => ({
-                            id: `datetime=${i.datetime}&volume=${i.volume}&price=${i.price}&direction=${i.direction}&offset=${i.offset}`,
+                            id: `datetime=${i.datetime}&volume=${i.volume}&price=${i.price}&direction=${
+                                i.direction
+                            }&offset=${i.offset}`,
                             time: Math.ceil(new Date(i.datetime).getTime() / 1000),
                             color: i.direction === '空' ? 'yellow' : 'blue',
                             label: i.direction,

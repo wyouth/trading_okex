@@ -6,7 +6,7 @@ class Chart extends Component {
     componentDidMount() {
         const config = this.props.config;
         console.log('ready');
-        new window.TradingView.widget({
+        window.tvWidget = new window.TradingView.widget({
             debug: false,
             symbol: 'revH_trade=>OKEX',
             datafeed: chartApi(config),
@@ -25,7 +25,7 @@ class Chart extends Component {
             fullscreen: true,
             autosize: false,
             overrides: {
-                "mainSeriesProperties.showCountdown": true,
+                'mainSeriesProperties.showCountdown': true,
                 'paneProperties.background': '#131722',
                 'paneProperties.vertGridProperties.color': '#363c4e',
                 'paneProperties.horzGridProperties.color': '#363c4e',
@@ -35,9 +35,26 @@ class Chart extends Component {
                 'mainSeriesProperties.candleStyle.wickDownColor': '#7f323f'
             }
         });
+        window.tvWidget.onChartReady(function() {
+            console.log('tvWidget.onChartReady');
+            const iframe = document.querySelector('iframe');
+            // console.log(iframe.currentWindow.document.querySelector('input.symbol-edit'));
+            const inputEdit = document
+                .querySelector('iframe')
+                .contentWindow.document.querySelector('input.symbol-edit');
+            inputEdit.addEventListener('click', function() {
+                console.log('tvWidget.click');
+                const value = inputEdit.value;
+                inputEdit.value = value + ' ';
+                setTimeout(function() {
+                    inputEdit.value = value;
+                }, 100);
+                // inputEdit.value = value;
+            });
+        });
     }
     render() {
-        return <div id="tv_chart_container" style={{height: '100%'}}/>;
+        return <div id="tv_chart_container" style={{ height: '100%' }} />;
     }
 }
 
