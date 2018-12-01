@@ -8,7 +8,7 @@ class Chart extends Component {
         console.log('ready');
         new window.TradingView.widget({
             debug: false,
-            symbol: 'default!@#OKEX',
+            symbol: 'revH_trade=>OKEX',
             datafeed: chartApi(config),
             interval: '15',
             container_id: 'tv_chart_container',

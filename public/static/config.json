@@ -20,16 +20,34 @@
     ],
     "strategies": [
         {
-            "name": "默认",
-            "value": "default"
+            "name": "revH_trade",
+            "value": "revH_trade"
+        },
+        {
+            "name": "fcv_btc_trade",
+            "value": "fcv_btc_trade"
+        },
+        {
+            "name": "fcv_eth_trade",
+            "value": "fcv_eth_trade"
+        },
+        {
+            "name": "fcv_eos_trade",
+            "value": "fcv_eos_trade"
         }
     ],
     "tickers": {
         "OKEX": {
-            "default": "btc_usdt"
+            "revH_trade": "btc_usdt",
+            "fcv_btc_trade": "btc_usdt",
+            "fcv_eth_trade": "eth_usdt",
+            "fcv_eos_trade": "eos_usdt"
         },
         "Binance": {
-            "default": "BTCUSDT"
+            "revH_trade": "BTCUSDT",
+            "fcv_btc_trade": "BTCUSDT",
+            "fcv_eth_trade": "ETHUSDT",
+            "fcv_eos_trade": "EOSUSDT"
         }
     }
 }

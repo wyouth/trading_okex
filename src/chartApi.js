@@ -4,16 +4,15 @@ let currentExchange = 'OKEX';
 
 /**
  *
- * @param {string} exchange 交易所
  * @param {string} ticker 策略
  * @param {string} resolution 周期
  * @param {json} config 从本地读的json配置
  * @param {number} limit 最大条数
  */
-const getBarsData = async (ticker, resolution, config, limit = 2000) => {
+const getBarsData = async (ticker, resolution, config, limit = 2000, from ,to) => {
     console.warn('getBarsData');
-    const exchange = ticker.split('!@#')[1];
-    const symbol = config.tickers[exchange][ticker.split('!@#')[0]];
+    const exchange = ticker.split('=>')[1];
+    const symbol = config.tickers[exchange][ticker.split('=>')[0]];
     console.table({
         exchange,
         ticker,
@@ -21,6 +20,7 @@ const getBarsData = async (ticker, resolution, config, limit = 2000) => {
     });
     let url = '';
     let type;
+    // 根据不同交易所
     switch (exchange) {
         case 'Binance':
             if (resolution === 'D') {
@@ -36,6 +36,9 @@ const getBarsData = async (ticker, resolution, config, limit = 2000) => {
                 }
             }
             url = `https://www.binance.com/api/v1/klines?symbol=${symbol}&interval=${type}`;
+            if (to) {
+                url += `&endTime=${to * 1000}`;
+            }
             break;
         default:
             if (resolution === 'D') {
@@ -94,7 +97,7 @@ export default config => {
             console.warn('chartApi onReady');
             callback({
                 exchanges: config.exchanges,
-                symbols_types: config.strategies,
+                // symbols_types: config.strategies,
                 supported_resolutions: supportedResolutions,
                 supports_marks: true
                 // supports_timescale_marks: true,
@@ -105,18 +108,21 @@ export default config => {
             console.table({ userInput, exchange, symbolType });
             if (exchange) {
                 currentExchange = exchange;
-                const arr = config.strategies.map(i => {
+                let arr = [];
+                config.strategies.forEach(i => {
                     console.log(exchange);
                     console.log(config.tickers[exchange]);
-                    return {
-                        symbol: i.value,
-                        full_name: i.name,
-                        description: i.name,
-                        exchange: currentExchange,
-                        ticker: i.value + '!@#' + currentExchange,
-                        type: 'bitcoin'
-                    };
-                });
+                    if (config.tickers[exchange][i.value]) {
+                        arr.push({
+                            symbol: i.value,
+                            full_name: i.name,
+                            description: i.name,
+                            exchange: currentExchange,
+                            ticker: i.value + '=>' + currentExchange,
+                            type: 'bitcoin'
+                        });
+                    }
+                })
                 onResultReadyCallback(arr);
             }
         },
@@ -147,20 +153,20 @@ export default config => {
             console.warn('chartApi getBars');
             console.warn('getBars symbolInfo', symbolInfo);
             console.table({ resolution, from, to, firstDataRequest });
-            const finalResult = await getBarsData(symbolInfo.ticker, resolution, config);
+            const finalResult = await getBarsData(symbolInfo.ticker, resolution, config, 2000, from, to);
             let meta = {
                 noData: false
             };
             if (finalResult.length === 0) {
                 meta = {
-                    noData: true
-                    // nextTime: to
+                    noData: true,
+                    nextTime: to
                 };
             } else {
                 if (finalResult[0].time > to * 1000) {
                     meta = {
-                        noData: true
-                        // nextTime: finalResult[finalResult.length - 1].time / 1000
+                        noData: true,
+                        nextTime: finalResult[finalResult.length - 1].time / 1000
                     };
                 }
             }
@@ -197,25 +203,28 @@ export default config => {
             console.table({ startDate, endDate, resolution });
             try {
                 // const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8888`);
-                const response = await fetch(`${config.host}:${config.port}/info`);
+                const response = await fetch(`${config.host}:${config.port}/info?name=${symbolInfo.ticker.split('=>')[0]}`);
                 const result = await response.json();
-                onDataCallback(
-                    result.map(i => ({
-                        id: i.datetime + '',
-                        time: Math.ceil(new Date(i.datetime).getTime() / 1000),
-                        color: i.direction === '空' ? 'yellow' : 'blue',
-                        label: i.direction,
-                        text: `
-                        <div>
-                            <p>${i.offset}</p>
-                            <p>价格：${i.price}</p>
-                            <p>交易量：${i.volume}</p>
-                        </div>
-                    `,
-                        labelFontColor: 'white',
-                        minSize: 14
-                    }))
-                );
+                console.log('getMarks result', result);
+                if (Array.isArray(result)) {
+                    onDataCallback(
+                        result.reverse().map(i => ({
+                            id: `datetime=${i.datetime}&volume=${i.volume}&price=${i.price}&direction=${i.direction}&offset=${i.offset}`,
+                            time: Math.ceil(new Date(i.datetime).getTime() / 1000),
+                            color: i.direction === '空' ? 'yellow' : 'blue',
+                            label: i.direction,
+                            text: `
+                            <div>
+                                <p>${i.offset}</p>
+                                <p>价格：${i.price}</p>
+                                <p>交易量：${i.volume}</p>
+                            </div>
+                        `,
+                            labelFontColor: 'white',
+                            minSize: 14
+                        }))
+                    );
+                }
             } catch (e) {
                 console.error('getMarks catch error', e);
             }
