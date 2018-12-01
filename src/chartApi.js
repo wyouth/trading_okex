@@ -1,42 +1,100 @@
-const exchanges = [
-    {
-        name: 'OKEX',
-        value: 'OKEX',
-        desc: 'OKEX'
-    }
-];
 const supportedResolutions = ['1', '3', '5', '15', '30', '60', '120', '240', 'D', 'W'];
 
-let instruments = [];
+let currentExchange = 'OKEX';
+
+/**
+ *
+ * @param {string} exchange 交易所
+ * @param {string} ticker 策略
+ * @param {string} resolution 周期
+ * @param {json} config 从本地读的json配置
+ * @param {number} limit 最大条数
+ */
+const getBarsData = async (ticker, resolution, config, limit = 2000) => {
+    console.warn('getBarsData');
+    const exchange = ticker.split('!@#')[1];
+    const symbol = config.tickers[exchange][ticker.split('!@#')[0]];
+    console.table({
+        exchange,
+        ticker,
+        resolution
+    });
+    let url = '';
+    let type;
+    switch (exchange) {
+        case 'Binance':
+            if (resolution === 'D') {
+                type = '1d';
+            } else if (resolution === 'W') {
+                type = '1w';
+            } else {
+                const interval = Number(resolution);
+                if (interval < 60) {
+                    type = interval + 'm';
+                } else {
+                    type = interval / 60 + 'h';
+                }
+            }
+            url = `https://www.binance.com/api/v1/klines?symbol=${symbol}&interval=${type}`;
+            break;
+        default:
+            if (resolution === 'D') {
+                type = 'day';
+            } else if (resolution === 'W') {
+                type = 'week';
+            } else {
+                const interval = Number(resolution);
+                if (interval < 60) {
+                    type = interval + 'min';
+                } else {
+                    type = interval / 60 + 'hour';
+                }
+            }
+            url = `https://www.okex.com/v2/spot/markets/kline?symbol=${symbol}&type=${type}&coinVol=0&limit=${limit}`;
+    }
+    const response = await fetch(`${config.host}:${config.port}/proxy`, {
+        method: 'POST',
+        headers: new Headers({
+            credentials: 'same-origin',
+            'Content-Type': 'application/json'
+        }),
+        body: JSON.stringify({
+            url
+        })
+    });
+    const result = await response.json();
+    let finalResult = [];
+    switch (exchange) {
+        case 'Binance':
+            finalResult = result.map(i => ({
+                time: i[0],
+                open: Number(i[1]),
+                high: Number(i[2]),
+                low: Number(i[3]),
+                close: Number(i[4]),
+                volume: Number(i[5])
+            }));
+            break;
+        default:
+            finalResult = result.data.map(i => ({
+                time: i.time,
+                open: Number(i.open),
+                high: Number(i.high),
+                low: Number(i.low),
+                close: Number(i.close),
+                volume: Number(i.volume)
+            }));
+    }
+    return finalResult;
+};
+
 export default config => {
     return {
         onReady: async callback => {
             console.warn('chartApi onReady');
-            const response = await fetch(`${config.host}:${config.port}/proxy`, {
-                method: 'POST',
-                headers: new Headers({
-                    'Content-Type': 'application/json'
-                }),
-                body: JSON.stringify({
-                    url: 'https://www.okex.com/api/spot/v3/instruments'
-                })
-            });
-            const result = await response.json();
-            instruments = result;
-            let symbols_types = [];
-            let symbols_types_map = {};
-            result.forEach(i => {
-                symbols_types_map[i.quote_currency] = true;
-            });
-            for (let name in symbols_types_map) {
-                symbols_types.push({
-                    name,
-                    value: name
-                });
-            }
             callback({
-                exchanges,
-                symbols_types,
+                exchanges: config.exchanges,
+                symbols_types: config.strategies,
                 supported_resolutions: supportedResolutions,
                 supports_marks: true
                 // supports_timescale_marks: true,
@@ -45,39 +103,26 @@ export default config => {
         searchSymbols: async (userInput, exchange, symbolType, onResultReadyCallback) => {
             console.warn('chartApi searchSymbols ');
             console.table({ userInput, exchange, symbolType });
-            // {
-            //     "symbol": "<商品缩写名>",
-            //     "full_name": "<商品全称 -- 例: BTCE:BTCUSD>",
-            //     "description": "<商品描述>",
-            //     "exchange": "<交易所名>",
-            //     "ticker": "<商品代码, 可选>",
-            //     "type": "stock" | "futures" | "bitcoin" | "forex" | "index"
-            // }
-            let arr = [];
-            instruments.forEach(i => {
-                if (
-                    i.quote_currency === symbolType &&
-                    userInput !== symbolType &&
-                    i.base_currency.indexOf(userInput) > -1
-                ) {
-                    const instrument_id = i.instrument_id.replace('-', '/');
-                    arr.push({
-                        symbol: i.base_currency,
-                        full_name: instrument_id,
-                        description: instrument_id,
-                        exchange: exchange,
-                        // "ticker": instrument_id,
+            if (exchange) {
+                currentExchange = exchange;
+                const arr = config.strategies.map(i => {
+                    console.log(exchange);
+                    console.log(config.tickers[exchange]);
+                    return {
+                        symbol: i.value,
+                        full_name: i.name,
+                        description: i.name,
+                        exchange: currentExchange,
+                        ticker: i.value + '!@#' + currentExchange,
                         type: 'bitcoin'
-                    });
-                }
-            });
-            onResultReadyCallback(arr);
-            // console.table(result);
+                    };
+                });
+                onResultReadyCallback(arr);
+            }
         },
         resolveSymbol: async (symbolName, onSymbolResolvedCallback, onResolveErrorCallback) => {
             console.warn('chartApi resolveSymbol');
             console.table({ symbolName });
-
             await setTimeout(() => {}, 0);
             onSymbolResolvedCallback({
                 name: symbolName,
@@ -86,7 +131,7 @@ export default config => {
                 session: '24x7',
                 timezone: 'Etc/UTC',
                 ticker: symbolName,
-                exchange: 'OKEX',
+                exchange: currentExchange,
                 minmov: 1,
                 pricescale: 100000000,
                 has_intraday: true,
@@ -102,50 +147,7 @@ export default config => {
             console.warn('chartApi getBars');
             console.warn('getBars symbolInfo', symbolInfo);
             console.table({ resolution, from, to, firstDataRequest });
-            let type;
-            if (resolution === 'D') {
-                type = 'day';
-            } else if (resolution === 'W') {
-                type = 'week';
-            } else {
-                const interval = Number(resolution);
-                if (interval < 60) {
-                    type = interval + 'min';
-                } else {
-                    type = interval / 60 + 'hour';
-                }
-            }
-            const ticker = symbolInfo.ticker.replace('/', '_').toLowerCase();
-            const response = await fetch(
-                // https://www.okex.com/v2/market/index/kLine?symbol=f_usd_btc&type=1min&contractType=this_week&limit=1000&coinVol=0
-                // `/api/spot/v3/instruments/${ticker}/candles?start=${start}&end=${end}&granularity=${granularity}`,
-                `${config.host}:${config.port}/proxy`,
-                {
-                    method: 'POST',
-                    headers: new Headers({
-                        'Content-Type': 'application/json'
-                    }),
-                    body: JSON.stringify({
-                        url: `https://www.okex.com/v2/spot/markets/kline?symbol=${ticker}&type=${type}&coinVol=0`
-                    })
-                }
-            );
-            const result = await response.json();
-            let finalResult = result.data.map(i => ({
-                // ...i,
-                // close: Number(i.close),
-                // open: Number(i.open),
-                // high: Number(i.high),
-                // low: Number(i.low),
-                // volume: Number(i.volume),
-                // time: moment(i.time).valueOf()
-                time: i.time,
-                open: Number(i.open),
-                high: Number(i.high),
-                low: Number(i.low),
-                close: Number(i.close),
-                volume: Number(i.volume)
-            }));
+            const finalResult = await getBarsData(symbolInfo.ticker, resolution, config);
             let meta = {
                 noData: false
             };
@@ -165,10 +167,20 @@ export default config => {
             console.table(meta);
             onHistoryCallback(meta.noData ? [] : finalResult, meta);
         },
-        subscribeBars: (symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) => {
+        subscribeBars: async (
+            symbolInfo,
+            resolution,
+            onRealtimeCallback,
+            subscriberUID,
+            onResetCacheNeededCallback
+        ) => {
             console.warn('chartApi subscribeBars');
             console.warn('subscribeBars symbolInfo', symbolInfo);
             console.table({ resolution, subscriberUID });
+            const finalResult = await getBarsData(symbolInfo.ticker, resolution, config, 1);
+            if (finalResult.length === 1) {
+                onRealtimeCallback(finalResult[0]);
+            }
         },
         unsubscribeBars: subscriberUID => {
             console.warn('chartApi unsubscribeBars');

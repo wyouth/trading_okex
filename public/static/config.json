@@ -4,6 +4,32 @@
     "accounts": {
         "admin": "b123456c"
     },
-    "host": "http://127.0.0.1",
-    "port": "80"
+    "host": "http://192.168.1.99",
+    "port": "5000",
+    "exchanges": [
+        {
+            "name": "OKEX",
+            "value": "OKEX",
+            "desc": "OKEX"
+        },
+        {
+            "name": "Binance",
+            "value": "Binance",
+            "desc": "Binance"
+        }
+    ],
+    "strategies": [
+        {
+            "name": "默认",
+            "value": "default"
+        }
+    ],
+    "tickers": {
+        "OKEX": {
+            "default": "btc_usdt"
+        },
+        "Binance": {
+            "default": "BTCUSDT"
+        }
+    }
 }
