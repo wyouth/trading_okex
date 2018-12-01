@@ -16,6 +16,11 @@
             "name": "Binance",
             "value": "Binance",
             "desc": "Binance"
+        },
+        {
+            "name": "Bitmex",
+            "value": "Bitmex",
+            "desc": "Bitmex"
         }
     ],
     "strategies": [
@@ -48,10 +53,17 @@
             "fcv_btc_trade": "BTCUSDT",
             "fcv_eth_trade": "ETHUSDT",
             "fcv_eos_trade": "EOSUSDT"
+        },
+        "Bitmex": {
+            "revH_trade": "XBTUSD",
+            "fcv_btc_trade": "XBTUSD",
+            "fcv_eth_trade": "ETHUSD",
+            "fcv_eos_trade": "EOSZ18"
         }
     },
     "klineLimit": {
         "OKEX": 2000,
-        "Binance": 500
+        "Binance": 500,
+        "Bitmex": 1440
     }
 }

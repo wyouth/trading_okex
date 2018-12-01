@@ -22,6 +22,33 @@ const getBarsData = async (ticker, resolution, config, limit = 2000, from ,to) =
     let type;
     // 根据不同交易所
     switch (exchange) {
+        case 'Bitmex':
+            switch (resolution) {
+                case 'w':
+                case 'D':
+                    type = 'D';
+                    break;
+                case '240':
+                case '120':
+                case '60':
+                    type = '60';
+                    break;
+                case '30':
+                case '15':
+                case '5':
+                    type = '5';
+                    break;
+                default:
+                    type = '1';
+            }
+            url = `https://www.bitmex.com/api/udf/history?symbol=${symbol}&resolution=${type}`;
+            if (from) {
+                url += `&from=${from}`;
+            }
+            if (to) {
+                url += `&to=${to}`;
+            }
+            break;
         case 'Binance':
             if (resolution === 'D') {
                 type = '1d';
@@ -68,6 +95,18 @@ const getBarsData = async (ticker, resolution, config, limit = 2000, from ,to) =
     const result = await response.json();
     let finalResult = [];
     switch (exchange) {
+        case 'Bitmex':
+            if (Array.isArray(result.o)) {
+                finalResult = result.o.map((open, index) => ({
+                    time: result.t[index] * 1000,
+                    open: open,
+                    high: result.h[index],
+                    low: result.l[index],
+                    close: result.c[index],
+                    volume: (result.v[index] / 10000).toFixed(5)
+                }));
+            }
+            break;
         case 'Binance':
             finalResult = result.map(i => ({
                 time: i[0],
@@ -204,7 +243,17 @@ export default config => {
             console.warn('chartApi subscribeBars');
             console.warn('subscribeBars symbolInfo', symbolInfo);
             console.table({ resolution, subscriberUID });
-            const finalResult = await getBarsData(symbolInfo.ticker, resolution, config, 1);
+            const to = Math.ceil(Date.now() / 1000);
+            let granularity;
+            if (resolution === 'W') {
+                granularity = 86400 * 7;
+            } else if (resolution === 'D') {
+                granularity = 86400;
+            } else {
+                granularity = Number(resolution) * 60
+            }
+            const from = to - granularity;
+            const finalResult = await getBarsData(symbolInfo.ticker, resolution, config, 1, from, to);
             if (finalResult.length === 1) {
                 onRealtimeCallback(finalResult[0]);
             }
