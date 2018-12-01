@@ -153,7 +153,28 @@ export default config => {
             console.warn('chartApi getBars');
             console.warn('getBars symbolInfo', symbolInfo);
             console.table({ resolution, from, to, firstDataRequest });
-            const finalResult = await getBarsData(symbolInfo.ticker, resolution, config, 2000, from, to);
+            let granularity;
+            if (resolution === 'W') {
+                granularity = 86400 * 7;
+            } else if (resolution === 'D') {
+                granularity = 86400;
+            } else {
+                granularity = Number(resolution) * 60
+            }
+            const limit = config.klineLimit[currentExchange];
+            const loopTimes = Math.ceil((to - from) / granularity / limit);
+            let asyncArrs = new Array(loopTimes).fill(0);
+            const result = await Promise.all(
+                asyncArrs.map((_, index) => {
+                    const start = to - granularity * (index + 1) * limit;
+                    const end = to - granularity * index * limit;
+                    console.log('start', start);
+                    console.log('end', end);
+                    return getBarsData(symbolInfo.ticker, resolution, config, limit, start, end);
+                })
+            );
+            let finalResult = [];
+            result.forEach(i => (finalResult = i.concat(finalResult)));
             let meta = {
                 noData: false
             };

@@ -49,5 +49,9 @@
             "fcv_eth_trade": "ETHUSDT",
             "fcv_eos_trade": "EOSUSDT"
         }
+    },
+    "klineLimit": {
+        "OKEX": 2000,
+        "Binance": 500
     }
 }
