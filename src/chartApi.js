@@ -103,7 +103,7 @@ const getBarsData = async (ticker, resolution, config, limit = 2000, from ,to) =
                     high: result.h[index],
                     low: result.l[index],
                     close: result.c[index],
-                    volume: (result.v[index] / 10000).toFixed(5)
+                    volume: Number((result.v[index] / 10000).toFixed(5))
                 }));
             }
             break;
