@@ -39,9 +39,7 @@ class Chart extends Component {
             console.log('tvWidget.onChartReady');
             const iframe = document.querySelector('iframe');
             // console.log(iframe.currentWindow.document.querySelector('input.symbol-edit'));
-            const inputEdit = document
-                .querySelector('iframe')
-                .contentWindow.document.querySelector('input.symbol-edit');
+            const inputEdit = iframe.contentWindow.document.querySelector('input.symbol-edit');
             inputEdit.addEventListener('click', function() {
                 console.log('tvWidget.click');
                 const value = inputEdit.value;
