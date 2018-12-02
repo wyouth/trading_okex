@@ -37,8 +37,8 @@ class Chart extends Component {
         });
         window.tvWidget.onChartReady(function() {
             console.log('tvWidget.onChartReady');
+            // 偏门方法实现，点击输入框自动打开 交易所/策略选择的下拉框
             const iframe = document.querySelector('iframe');
-            // console.log(iframe.currentWindow.document.querySelector('input.symbol-edit'));
             const inputEdit = iframe.contentWindow.document.querySelector('input.symbol-edit');
             inputEdit.addEventListener('click', function() {
                 console.log('tvWidget.click');

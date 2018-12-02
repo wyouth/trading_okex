@@ -3,7 +3,7 @@ const supportedResolutions = ['1', '3', '5', '15', '30', '60', '120', '240', 'D'
 let currentExchange = 'OKEX';
 
 /**
- *
+ * 获取k线数据
  * @param {string} ticker 策略
  * @param {string} resolution 周期
  * @param {json} config 从本地读的json配置
@@ -20,7 +20,7 @@ const getBarsData = async (ticker, resolution, config, limit = 2000, from, to) =
     });
     let url = '';
     let type;
-    // 根据不同交易所
+    // 根据不同交易所 不同的url
     switch (exchange) {
         case 'Bitmex':
             switch (resolution) {
@@ -94,6 +94,7 @@ const getBarsData = async (ticker, resolution, config, limit = 2000, from, to) =
     });
     const result = await response.json();
     let finalResult = [];
+    // 不同的接口返回值处理方式
     switch (exchange) {
         case 'Bitmex':
             if (Array.isArray(result.o)) {
