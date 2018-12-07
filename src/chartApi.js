@@ -120,7 +120,7 @@ const getBarsData = async (ticker, resolution, config, limit = 2000, from, to) =
             break;
         default:
             finalResult = result.data.map(i => ({
-                time: i.time,
+                time: i[config.get_time_key],
                 open: Number(i.open),
                 high: Number(i.high),
                 low: Number(i.low),
@@ -130,7 +130,34 @@ const getBarsData = async (ticker, resolution, config, limit = 2000, from, to) =
     }
     return finalResult;
 };
-
+const FetchEdit = async (type, url, body) => {
+    const response = await fetch(url, {
+        method: type,
+        headers: new Headers({
+            credentials: 'same-origin',
+            'Content-Type': 'application/json'
+        }),
+        // body: JSON.stringify(body)
+    });
+    const result = await response.json();
+    return result;
+}
+export const getBalanceData = async (ticker,coins, host, port, ) => {
+    let urlRate = `${host}:${port}/ticker?symbol=${coins}`;
+    let urlBalance = `${host}:${port}/info?name=${ticker.replace('trade','account')}`;
+    const [balance, rate] = await Promise.all([FetchEdit('GET', urlBalance), FetchEdit('GET', urlRate)]);
+    console.log('getBalanceData',balance,'==>', rate, balance && Object.keys(balance) > 0 && rate && rate.last);
+    if(balance && Object.keys(balance).length > 0 && rate && rate.last){
+        const {datetime, ...otherData} = balance;
+        return {
+            rate: rate.last,
+            data: otherData
+        }
+    }else{
+        console.error('getBalanceData => error');
+        return null
+    }
+}
 export default config => {
     return {
         onReady: async callback => {
@@ -280,7 +307,7 @@ export default config => {
                     `${config.host}:${config.port}/info?name=${symbolInfo.ticker.split('=>')[0]}`
                 );
                 const result = await response.json();
-                console.log('getMarks result', result);
+                // console.log('getMarks result', result);
                 if (Array.isArray(result)) {
                     onDataCallback(
                         result.reverse().map(i => ({

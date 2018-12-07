@@ -4,8 +4,9 @@
     "accounts": {
         "admin": "b123456c"
     },
-    "host": "http://127.0.0.1",
+    "host": "http://192.168.1.99",
     "port": "5000",
+    "get_time_key": "createdDate",
     "exchanges": [
         {
             "name": "OKEX",
@@ -59,6 +60,26 @@
             "fcv_btc_trade": "XBTUSD",
             "fcv_eth_trade": "ETHUSD",
             "fcv_eos_trade": "EOSZ18"
+        }
+    },
+    "tickersToCoinType": {
+        "OKEX": {
+            "revH_trade": "BTC/USDT",
+            "fcv_btc_trade": "BTC/USDT",
+            "fcv_eth_trade": "ETH/USDT",
+            "fcv_eos_trade": "EOS/USDT"
+        },
+        "Binance": {
+            "revH_trade": "BTC/USDT",
+            "fcv_btc_trade": "BTC/USDT",
+            "fcv_eth_trade": "ETH/USDT",
+            "fcv_eos_trade": "EOS/USDT"
+        },
+        "Bitmex": {
+            "revH_trade": "XBT/USD",
+            "fcv_btc_trade": "XBT/USD",
+            "fcv_eth_trade": "ETH/USD",
+            "fcv_eos_trade": "EOS/Z18"
         }
     },
     "klineLimit": {

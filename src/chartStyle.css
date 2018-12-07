@@ -27,8 +27,8 @@
 }
 .modal_mask .modal {
   background: #fff;
-  min-width: 400px;
-  min-height: 300px;
+  min-width: 480px;
+  min-height: 240px;
 }
 .modal_mask .modal .title_wraper {
   padding-left: 16px;
@@ -40,16 +40,24 @@
   position: relative;
 }
 .modal_mask .modal .item .title {
-  width: 40%;
   box-sizing: border-box;
   padding: 4px 10px;
   display: inline-block;
   white-space: nowrap;
-  color: #888989;
+  color: #888989 !important;
   text-align: center;
 }
 .modal_mask .modal .item .data {
-  width: 60%;
+  width: 38%;
+  box-sizing: border-box;
+  padding: 4px 10px;
+  display: inline-block;
+  white-space: nowrap;
+  color: #4a4a4a;
+  text-align: center
+}
+.modal_mask .modal .item .data:first-child {
+  width: 20%;
   box-sizing: border-box;
   padding: 4px 10px;
   display: inline-block;
@@ -71,4 +79,9 @@
   position: absolute;
   right: 4px;
   line-height: 24px;
+}
+.no_data{
+  padding-top: 68px;
+  text-align: center;
+  color: #8e8e8e;
 }

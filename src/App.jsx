@@ -27,6 +27,7 @@ class App extends Component {
             if (xmlhttp.readyState === 4) {
                 try {
                     const config = JSON.parse(xmlhttp.responseText);
+                    // console.log('config',config)
                     const title = config.title;
                     document.title = title;
                     const lastLoginTime = Number(window.localStorage.getItem('tradingViewLoginTime'));

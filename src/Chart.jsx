@@ -1,10 +1,12 @@
 // eslint-disable-next-line
 import React, { Component } from 'react';
-import chartApi from './chartApi';
-import './chartStyle.css'
+import chartApi, { getBalanceData } from './chartApi';
+import './chartStyle.css';
 class Chart extends Component {
     state = {
-        showBalance: false
+        showBalance: false,
+        balanceData: null,
+        modalLoading: false
     }
     componentDidMount() {
         const config = this.props.config;
@@ -54,12 +56,96 @@ class Chart extends Component {
             });
         });
     }
+    getBalance = async () => {
+        this.setState({
+            modalLoading: true
+        })
+        const config = this.props.config;
+        const iframe = document.querySelector('iframe');
+        const inputEdit = iframe.contentWindow.document.querySelector('input.symbol-edit');
+        const ticker_coin_type = inputEdit.value;
+        let ticker = '';
+        let ticker_text_array = []
+        if (ticker_coin_type) {
+            ticker_text_array = ticker_coin_type.split('=>');
+            // console.log('ticker_text_array',ticker_text_array)
+            if (ticker_text_array.length > 0) {
+                ticker = ticker_text_array[0]
+            }
+        }
+        console.log('inputEdit', inputEdit.value);
+        if (ticker) {
+            // console.log('ticker',ticker);
+            const coins = config.tickersToCoinType[ticker_text_array[1]][ticker]
+            const balanceData = await getBalanceData(ticker, coins, config.host, config.port);
+            if (balanceData) {
+                this.setState({
+                    balanceData,
+                    modalLoading: false
+                })
+            } else {
+                this.setState({
+                    balanceData: null,
+                    modalLoading: false
+                })
+            }
+        }
+    }
     showBalance = (e) => {
+        if (!this.state.showBalance) {
+            this.setState({
+                showBalance: !this.state.showBalance
+            })
+            this.getBalance();
+        }
         this.setState({
             showBalance: !this.state.showBalance
         })
     }
+    getBalanceBody = () => {
+        const balanceDataObj = this.state.balanceData.data;
+        const rate = this.state.balanceData.rate;
+        let account = 0;
+        const dataDom =  Object.keys(balanceDataObj).map((item, index) => {
+            account += item === 'usdt'? Number(balanceDataObj[item]): Number(balanceDataObj[item]) * Number(rate)
+            return (
+                <div className="item" key = {index}>
+                    <span className="data">
+                        {item}
+                    </span>
+                    <span className="data">
+                        {balanceDataObj[item]}
+                    </span>
+                    <span className="data">
+                        {
+                            item === 'usdt'
+                            ? balanceDataObj[item]
+                            : Number(balanceDataObj[item]) * Number(rate)
+                        }
+                    </span>
+                </div>
+            )
+        })
+        return (
+            <>
+                {dataDom}
+                <div className="item">
+                    <span className="data title">
+                        合计
+                    </span>
+                    <span className="data">
+                        {account} usdt
+                    </span>
+                    <span className="data">
+                        
+                    </span>
+                </div>
+            </>
+        )
+    }
     render() {
+        const modalContrntLoading = <div className = "no_data">加载中...</div>;
+        const modalContrntError = <div className = "no_data">暂无数据</div>;
         return (
             <div className="box">
                 <div id="tv_chart_container" style={{ height: '100%' }} />
@@ -77,48 +163,36 @@ class Chart extends Component {
                                 onClick={this.showBalance}
                                 className="modal_mask"
                             >
-                                <div className="modal" onClick = {(e) =>{e.stopPropagation()}}>
+                                <div className="modal" onClick={(e) => { e.stopPropagation() }}>
                                     <div className="title_wraper">
                                         <span>
                                             策略财务统计
                                         </span>
-                                        <span className = "close_but" onClick={this.showBalance}>
+                                        <span className="close_but" onClick={this.showBalance}>
                                             +
                                         </span>
                                     </div>
-                                    <div className ="content">
+                                    <div className="content">
                                         <div className="item">
-                                            <span className="title">
+                                            <span className="title data">
                                                 名称
                                             </span>
-                                            <span className="data">
+                                            <span className="data title">
                                                 数量
-                                        </span>
-                                        </div>
-                                        <div className="item">
-                                            <span className="title">
-                                                当前资产
-                                        </span>
-                                            <span className="data">
-                                                1200000 okex
-                                        </span>
-                                        </div>
-                                        <div className="item">
-                                            <span className="title">
-                                                当前资产
                                             </span>
-                                            <span className="data">
-                                                1200000 okex
+                                            <span className="data title">
+                                                换算 (usdt)
                                             </span>
                                         </div>
-                                        <div className="item">
-                                            <span className="title">
-                                                当前资产
-                                            </span>
-                                            <span className="data">
-                                                1200000 okex
-                                            </span>
-                                        </div>
+                                        {
+                                            this.state.modalLoading
+                                                ? modalContrntLoading
+                                                : (
+                                                    this.state.balanceData
+                                                        ? this.getBalanceBody()
+                                                        : modalContrntError
+                                                )
+                                        }
                                     </div>
                                 </div>
                             </div>
