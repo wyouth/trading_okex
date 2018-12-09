@@ -130,6 +130,52 @@ const getBarsData = async (ticker, resolution, config, limit = 2000, from, to) =
     }
     return finalResult;
 };
+function strip(num, precision = 16) {
+    return +parseFloat(num.toPrecision(precision));
+}
+const ticketValuePlus = (data) => {
+    let DefaultArray = [];
+    data.forEach(i => {
+        let justDataDefault = {
+            time: Math.ceil(new Date(i.datetime).getTime() / 1000),
+            price: i.price,
+            volume: Number(i.volume),
+            direction: i.direction,
+            color: i.color,
+            label: i.label,
+            text: i.text,
+            offset: i.offset,
+        }
+        if(DefaultArray.length < 1){
+            DefaultArray.push(justDataDefault)
+        }else{
+            if(DefaultArray[DefaultArray.length -1].time === Math.ceil(new Date(i.datetime).getTime() / 1000)){
+                DefaultArray[DefaultArray.length -1].volume =  Number(DefaultArray[DefaultArray.length -1].volume) + Number(i.volume);
+            }else{
+                DefaultArray.push(justDataDefault);
+            }
+        }
+    })
+    const dataWithBin = DefaultArray.reverse().map(i => ({
+        id: `datetime=${i.time}&volume=${i.volume}&price=${i.price}&direction=${
+            i.direction
+        }&offset=${i.offset}`,
+        time: i.time,
+        color: i.direction === '空' ? 'yellow' : 'blue',
+        label: i.direction,
+        text: `
+        <div>
+            <p>${i.offset}</p>
+            <p>价格：${i.price}</p>
+            <p>交易量：${strip(i.volume)}</p>
+        </div>
+    `,
+        labelFontColor: 'white',
+        minSize: 14
+    }))
+    console.log('dataWithBin',dataWithBin)
+    return dataWithBin
+}
 const FetchEdit = async (type, url, body) => {
     const response = await fetch(url, {
         method: type,
@@ -151,7 +197,7 @@ export const getBalanceData = async (ticker,coins, host, port, ) => {
         const {datetime, ...otherData} = balance;
         return {
             rate: rate.last,
-            data: otherData
+            data: otherData?otherData:{}
         }
     }else{
         console.error('getBalanceData => error');
@@ -310,23 +356,7 @@ export default config => {
                 // console.log('getMarks result', result);
                 if (Array.isArray(result)) {
                     onDataCallback(
-                        result.reverse().map(i => ({
-                            id: `datetime=${i.datetime}&volume=${i.volume}&price=${i.price}&direction=${
-                                i.direction
-                            }&offset=${i.offset}`,
-                            time: Math.ceil(new Date(i.datetime).getTime() / 1000),
-                            color: i.direction === '空' ? 'yellow' : 'blue',
-                            label: i.direction,
-                            text: `
-                            <div>
-                                <p>${i.offset}</p>
-                                <p>价格：${i.price}</p>
-                                <p>交易量：${i.volume}</p>
-                            </div>
-                        `,
-                            labelFontColor: 'white',
-                            minSize: 14
-                        }))
+                        ticketValuePlus(result)
                     );
                 }
             } catch (e) {

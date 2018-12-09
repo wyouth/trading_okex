@@ -73,7 +73,7 @@ class Chart extends Component {
                 ticker = ticker_text_array[0]
             }
         }
-        console.log('inputEdit', inputEdit.value);
+        // console.log('inputEdit', inputEdit.value);
         if (ticker) {
             // console.log('ticker',ticker);
             const coins = config.tickersToCoinType[ticker_text_array[1]][ticker]
@@ -103,49 +103,92 @@ class Chart extends Component {
         })
     }
     getBalanceBody = () => {
-        const balanceDataObj = this.state.balanceData.data;
-        const rate = this.state.balanceData.rate;
-        let account = 0;
-        const dataDom =  Object.keys(balanceDataObj).map((item, index) => {
-            account += item === 'usdt'? Number(balanceDataObj[item]): Number(balanceDataObj[item]) * Number(rate)
+        const config = this.props.config;
+        const iframe = document.querySelector('iframe');
+        const inputEdit = iframe.contentWindow.document.querySelector('input.symbol-edit');
+        const ticker_coin_type = inputEdit.value;
+        let ticker = '';
+        let ticker_text_array = []
+        if (ticker_coin_type) {
+            ticker_text_array = ticker_coin_type.split('=>');
+            // console.log('ticker_text_array',ticker_text_array)
+            if (ticker_text_array.length > 0) {
+                ticker = ticker_text_array[0]
+            }
+        }
+        if (ticker) {
+            // console.log('ticker',ticker);
+            const coins = config.tickersToCoinType[ticker_text_array[1]][ticker];
+            const baseCoin = coins.split('/')[0];
+            const balanceDataObj = this.state.balanceData.data;
+            const rate = this.state.balanceData.rate;
+            let currentCoinAmount = 0;
+            const { initial, stratey_name, ...coninData } = balanceDataObj;
+            const dataDom = Object.keys(coninData).map((item, index) => {   
+                console.log('currentCoinAmount',Number(balanceDataObj[item]), rate)
+                currentCoinAmount += (item.toLowerCase() === baseCoin.toLowerCase() ? Number(balanceDataObj[item]) : Number(balanceDataObj[item]) / rate);
+                return (
+                    <div className="column_item" key={index}>
+                        <span className = "item title top">
+                            {
+                                item
+                            }
+                        </span>
+                        <span className = "item">
+                            {
+                                item.toLowerCase() === baseCoin.toLowerCase() ? `${initial}` : '-'
+                            }
+                        </span>
+                        <span className = "item">
+                            {balanceDataObj[item]}
+                        </span>
+                        <span className = "item">
+                            /
+                        </span>
+                    </div>
+                )
+            })
             return (
-                <div className="item" key = {index}>
-                    <span className="data">
-                        {item}
-                    </span>
-                    <span className="data">
-                        {balanceDataObj[item]}
-                    </span>
-                    <span className="data">
-                        {
-                            item === 'usdt'
-                            ? balanceDataObj[item]
-                            : Number(balanceDataObj[item]) * Number(rate)
-                        }
-                    </span>
+                <div className = "table_wraper">
+                    <div className = "column_item">
+                        <div className = "item title top">
+    
+                        </div>
+                        <div className = "item title">
+                            初始入金
+                        </div>
+                        <div className = "item title">
+                            当前资产
+                        </div>
+                        <div className = "item title">
+                            收益率
+                        </div>
+                    </div>
+                    {dataDom}
+                    <div>
+                        <div className = "item title top">
+                            总和 (按照入金类型折算)
+                        </div>
+                        <div className = "item">
+                            {initial} {baseCoin}
+                        </div>
+                        <div className = "item">
+                            {currentCoinAmount} {baseCoin}
+                        </div>
+                        <div className = "item">
+                            {
+                                (((currentCoinAmount / Number(initial)) - 1) * 100).toFixed(2)
+                            } %
+                        </div>
+                    </div>
                 </div>
             )
-        })
-        return (
-            <>
-                {dataDom}
-                <div className="item">
-                    <span className="data title">
-                        合计
-                    </span>
-                    <span className="data">
-                        {account} usdt
-                    </span>
-                    <span className="data">
-                        
-                    </span>
-                </div>
-            </>
-        )
+        }
+        return null
     }
     render() {
-        const modalContrntLoading = <div className = "no_data">加载中...</div>;
-        const modalContrntError = <div className = "no_data">暂无数据</div>;
+        const modalContrntLoading = <div className="no_data">加载中...</div>;
+        const modalContrntError = <div className="no_data">暂无数据</div>;
         return (
             <div className="box">
                 <div id="tv_chart_container" style={{ height: '100%' }} />
@@ -173,17 +216,6 @@ class Chart extends Component {
                                         </span>
                                     </div>
                                     <div className="content">
-                                        <div className="item">
-                                            <span className="title data">
-                                                名称
-                                            </span>
-                                            <span className="data title">
-                                                数量
-                                            </span>
-                                            <span className="data title">
-                                                换算 (usdt)
-                                            </span>
-                                        </div>
                                         {
                                             this.state.modalLoading
                                                 ? modalContrntLoading

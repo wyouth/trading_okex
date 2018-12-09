@@ -4,7 +4,7 @@
     "accounts": {
         "admin": "b123456c"
     },
-    "host": "http://192.168.1.99",
+    "host": "http://192.168.1.34",
     "port": "5000",
     "get_time_key": "createdDate",
     "exchanges": [
