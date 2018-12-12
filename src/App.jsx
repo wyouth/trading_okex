@@ -86,40 +86,42 @@ class App extends Component {
         }
     };
     render() {
-        const { hasLogin, username, password, errorMsg, config, loading } = this.state;
+        // const { hasLogin, username, password, errorMsg, config, loading } = this.state;
+        const {config, loading } = this.state;
         if (loading) {
             return <div>loading...</div>;
         } else {
-            return hasLogin ? (
-                <Chart config={config} />
-            ) : (
-                <div style={{ height: '100%' }}>
-                    <div className="login-bg" />
-                    <div className="main">
-                        <input
-                            type="text"
-                            className="ant-input"
-                            placeholder="用户名"
-                            style={{ marginBottom: 44 }}
-                            value={username}
-                            onChange={e => this.onChange('username', e.target.value)}
-                        />
-                        <input
-                            type="password"
-                            className="ant-input"
-                            placeholder="密码"
-                            value={password}
-                            onChange={e => this.onChange('password', e.target.value)}
-                        />
-                        <p className="error-msg" style={{ marginBottom: 24, marginTop: 8, height: 24 }}>
-                            {errorMsg}
-                        </p>
-                        <button onClick={this.submit} className="ant-btn ant-btn-primary ant-btn-lg">
-                            登 录
-                        </button>
-                    </div>
-                </div>
-            );
+            return <Chart config={config} />
+            // return hasLogin ? (
+            //     <Chart config={config} />
+            // ) : (
+            //     <div style={{ height: '100%' }}>
+            //         <div className="login-bg" />
+            //         <div className="main">
+            //             <input
+            //                 type="text"
+            //                 className="ant-input"
+            //                 placeholder="用户名"
+            //                 style={{ marginBottom: 44 }}
+            //                 value={username}
+            //                 onChange={e => this.onChange('username', e.target.value)}
+            //             />
+            //             <input
+            //                 type="password"
+            //                 className="ant-input"
+            //                 placeholder="密码"
+            //                 value={password}
+            //                 onChange={e => this.onChange('password', e.target.value)}
+            //             />
+            //             <p className="error-msg" style={{ marginBottom: 24, marginTop: 8, height: 24 }}>
+            //                 {errorMsg}
+            //             </p>
+            //             <button onClick={this.submit} className="ant-btn ant-btn-primary ant-btn-lg">
+            //                 登 录
+            //             </button>
+            //         </div>
+            //     </div>
+            // );
         }
     }
 }
