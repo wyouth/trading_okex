@@ -19,7 +19,7 @@ class App extends Component {
         window.TradingView.onready(this.loadConfig);
     }
     loadConfig = async () => {
-        var xmlhttp = new XMLHttpRequest();
+        let xmlHttp = new XMLHttpRequest();
         xmlhttp.open('GET', '/static/config.json?_' + Date.now(), true);
         xmlhttp.send();
         xmlhttp.onreadystatechange = () => {
