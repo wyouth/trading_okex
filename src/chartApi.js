@@ -221,13 +221,25 @@ export default config => {
         searchSymbols: async (userInput, exchange, symbolType, onResultReadyCallback) => {
             console.warn('chartApi searchSymbols ');
             console.table({ userInput, exchange, symbolType });
+            const response = await fetch(
+                `${config.host}:${config.port}/strategies/list`
+            );
+            const result = await response.json();
+            let tickyUsableObj = {};
+            if(result && result.data && Array.isArray(result.data.list)){
+                result.data.list.forEach((item) => {
+                    tickyUsableObj[item.name + '_trade'] = item;
+                })
+            }
             if (exchange) {
                 currentExchange = exchange;
                 let arr = [];
                 config.strategies.forEach(i => {
                     console.log(exchange);
                     console.log(config.tickers[exchange]);
-                    if (config.tickers[exchange][i.value]) {
+                    console.log('tickyUsableObj',tickyUsableObj,i.value );
+                    //判断是否有权限 查看策略
+                    if (tickyUsableObj[i.value] && config.tickers[exchange][i.value]) {
                         arr.push({
                             symbol: i.value,
                             full_name: i.name,
