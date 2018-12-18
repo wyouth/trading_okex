@@ -192,13 +192,19 @@ class Chart extends Component {
         return (
             <div className="box">
                 <div id="tv_chart_container" style={{ height: '100%' }} />
-                <div className="balance_button" onClick={
-                    this.showBalance
-                }>
+                <div
+                    className="balance_button"
+                    onClick={
+                        this.showBalance
+                    }
+                >
                     <span>
                         资产
-                        </span>
+                    </span>
                 </div>
+                <a href = "/logout" className="balance_button logout">
+                    退出
+                </a>
                 {
                     this.state.showBalance
                         ? (

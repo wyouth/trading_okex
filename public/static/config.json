@@ -4,8 +4,8 @@
     "accounts": {
         "admin": "b123456c"
     },
-    "host": "http://127.0.0.1",
-    "port": "5000",
+    "host": "",
+    "port": "",
     "get_time_key": "createdDate",
     "exchanges": [
         {
@@ -76,10 +76,10 @@
             "fcv_eos_trade": "EOS/USDT"
         },
         "Bitmex": {
-            "revH_trade": "XBT/USD",
-            "fcv_btc_trade": "XBT/USD",
-            "fcv_eth_trade": "ETH/USD",
-            "fcv_eos_trade": "EOS/Z18"
+            "revH_trade": "BTC/USDT",
+            "fcv_btc_trade": "BTC/USDT",
+            "fcv_eth_trade": "ETH/USDT",
+            "fcv_eos_trade": "EOS/USDT"
         }
     },
     "klineLimit": {

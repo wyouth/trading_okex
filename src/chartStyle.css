@@ -15,6 +15,12 @@
 .balance_button:hover {
   cursor: pointer;
 }
+.balance_button.logout{
+  top: 684px;
+  color: #e61c1c;
+  border-color: #e61c1c;
+  text-decoration: none;
+}
 .no_data {
   margin-top: 40px;
   text-align: center;

@@ -8,127 +8,134 @@ let currentExchange = 'OKEX';
  * @param {string} resolution 周期
  * @param {json} config 从本地读的json配置
  * @param {number} limit 最大条数
+ * @param from
+ * @param to
  */
 const getBarsData = async (ticker, resolution, config, limit = 2000, from, to) => {
-    console.warn('getBarsData');
-    const exchange = ticker.split('=>')[1];
-    const symbol = config.tickers[exchange][ticker.split('=>')[0]];
-    console.table({
-        exchange,
-        ticker,
-        resolution
-    });
-    let url = '';
-    let type;
-    // 根据不同交易所 不同的url
-    switch (exchange) {
-        case 'Bitmex':
-            switch (resolution) {
-                case 'w':
-                case 'D':
-                    type = 'D';
-                    break;
-                case '240':
-                case '120':
-                case '60':
-                    type = '60';
-                    break;
-                case '30':
-                case '15':
-                case '5':
-                    type = '5';
-                    break;
-                default:
-                    type = '1';
-            }
-            url = `https://www.bitmex.com/api/udf/history?symbol=${symbol}&resolution=${type}`;
-            if (from) {
-                url += `&from=${from}`;
-            }
-            if (to) {
-                url += `&to=${to}`;
-            }
-            break;
-        case 'Binance':
-            if (resolution === 'D') {
-                type = '1d';
-            } else if (resolution === 'W') {
-                type = '1w';
-            } else {
-                const interval = Number(resolution);
-                if (interval < 60) {
-                    type = interval + 'm';
-                } else {
-                    type = interval / 60 + 'h';
+    try{
+        console.warn('getBarsData');
+        const exchange = ticker.split('=>')[1];
+        const symbol = config.tickers[exchange][ticker.split('=>')[0]];
+        console.table({
+            exchange,
+            ticker,
+            resolution
+        });
+        let url = '';
+        let type;
+        // 根据不同交易所 不同的url
+        switch (exchange) {
+            case 'Bitmex':
+                switch (resolution) {
+                    case 'w':
+                    case 'D':
+                        type = 'D';
+                        break;
+                    case '240':
+                    case '120':
+                    case '60':
+                        type = '60';
+                        break;
+                    case '30':
+                    case '15':
+                    case '5':
+                        type = '5';
+                        break;
+                    default:
+                        type = '1';
                 }
-            }
-            url = `https://www.binance.com/api/v1/klines?symbol=${symbol}&interval=${type}`;
-            if (to) {
-                url += `&endTime=${to * 1000}`;
-            }
-            break;
-        default:
-            if (resolution === 'D') {
-                type = 'day';
-            } else if (resolution === 'W') {
-                type = 'week';
-            } else {
-                const interval = Number(resolution);
-                if (interval < 60) {
-                    type = interval + 'min';
-                } else {
-                    type = interval / 60 + 'hour';
+                url = `https://www.bitmex.com/api/udf/history?symbol=${symbol}&resolution=${type}`;
+                if (from) {
+                    url += `&from=${from}`;
                 }
-            }
-            url = `https://www.okex.com/v2/spot/markets/kline?symbol=${symbol}&type=${type}&coinVol=0&limit=${limit}`;
-    }
-    const response = await fetch(`${config.host}:${config.port}/proxy`, {
-        method: 'POST',
-        headers: new Headers({
-            credentials: 'same-origin',
-            'Content-Type': 'application/json'
-        }),
-        body: JSON.stringify({
-            url
-        })
-    });
-    const result = await response.json();
-    let finalResult = [];
-    // 不同的接口返回值处理方式
-    switch (exchange) {
-        case 'Bitmex':
-            if (Array.isArray(result.o)) {
-                finalResult = result.o.map((open, index) => ({
-                    time: result.t[index] * 1000,
-                    open: open,
-                    high: result.h[index],
-                    low: result.l[index],
-                    close: result.c[index],
-                    volume: Number((result.v[index] / 10000).toFixed(5))
+                if (to) {
+                    url += `&to=${to}`;
+                }
+                break;
+            case 'Binance':
+                if (resolution === 'D') {
+                    type = '1d';
+                } else if (resolution === 'W') {
+                    type = '1w';
+                } else {
+                    const interval = Number(resolution);
+                    if (interval < 60) {
+                        type = interval + 'm';
+                    } else {
+                        type = interval / 60 + 'h';
+                    }
+                }
+                url = `https://www.binance.com/api/v1/klines?symbol=${symbol}&interval=${type}`;
+                if (to) {
+                    url += `&endTime=${to * 1000}`;
+                }
+                break;
+            default:
+                if (resolution === 'D') {
+                    type = 'day';
+                } else if (resolution === 'W') {
+                    type = 'week';
+                } else {
+                    const interval = Number(resolution);
+                    if (interval < 60) {
+                        type = interval + 'min';
+                    } else {
+                        type = interval / 60 + 'hour';
+                    }
+                }
+                url = `https://www.okex.com/v2/spot/markets/kline?symbol=${symbol}&type=${type}&coinVol=0&limit=${limit}`;
+        }
+        const response = await fetch(`/proxy`, {
+            method: 'POST',
+            headers: new Headers({
+                credentials: 'same-origin',
+                'Content-Type': 'application/json'
+            }),
+            body: JSON.stringify({
+                url
+            })
+        });
+        const result = await response.json();
+        let finalResult = [];
+        // 不同的接口返回值处理方式
+        switch (exchange) {
+            case 'Bitmex':
+                if (Array.isArray(result.o)) {
+                    finalResult = result.o.map((open, index) => ({
+                        time: result.t[index] * 1000,
+                        open: open,
+                        high: result.h[index],
+                        low: result.l[index],
+                        close: result.c[index],
+                        volume: Number((result.v[index] / 10000).toFixed(5))
+                    }));
+                }
+                break;
+            case 'Binance':
+                finalResult = result.map(i => ({
+                    time: i[0],
+                    open: Number(i[1]),
+                    high: Number(i[2]),
+                    low: Number(i[3]),
+                    close: Number(i[4]),
+                    volume: Number(i[5])
                 }));
-            }
-            break;
-        case 'Binance':
-            finalResult = result.map(i => ({
-                time: i[0],
-                open: Number(i[1]),
-                high: Number(i[2]),
-                low: Number(i[3]),
-                close: Number(i[4]),
-                volume: Number(i[5])
-            }));
-            break;
-        default:
-            finalResult = result.data.map(i => ({
-                time: i[config.get_time_key],
-                open: Number(i.open),
-                high: Number(i.high),
-                low: Number(i.low),
-                close: Number(i.close),
-                volume: Number(i.volume)
-            }));
+                break;
+            default:
+                finalResult = result.data.map(i => ({
+                    time: i[config.get_time_key],
+                    open: Number(i.open),
+                    high: Number(i.high),
+                    low: Number(i.low),
+                    close: Number(i.close),
+                    volume: Number(i.volume)
+                }));
+        }
+        return finalResult;
+    }catch (e) {
+        console.error(e);
+        return [];
     }
-    return finalResult;
 };
 function strip(num, precision = 16) {
     return +parseFloat(num.toPrecision(precision));
@@ -189,8 +196,8 @@ const FetchEdit = async (type, url, body) => {
     return result;
 }
 export const getBalanceData = async (ticker,coins, host, port, ) => {
-    let urlRate = `${host}:${port}/ticker?symbol=${coins}`;
-    let urlBalance = `${host}:${port}/info?name=${ticker.replace('trade','account')}`;
+    let urlRate = `/ticker?symbol=${coins}`;
+    let urlBalance = `/info?name=${ticker.replace('trade','account')}`;
     const [balance, rate] = await Promise.all([FetchEdit('GET', urlBalance), FetchEdit('GET', urlRate)]);
     console.log('getBalanceData',balance,'==>', rate, balance && Object.keys(balance) > 0 && rate && rate.last);
     if(balance && Object.keys(balance).length > 0 && rate && rate.last){
@@ -222,7 +229,7 @@ export default config => {
             console.warn('chartApi searchSymbols ');
             console.table({ userInput, exchange, symbolType });
             const response = await fetch(
-                `${config.host}:${config.port}/strategies/list`
+                `/strategies/list`
             );
             const result = await response.json();
             let tickyUsableObj = {};
@@ -341,6 +348,7 @@ export default config => {
                 granularity = Number(resolution) * 60;
             }
             const from = to - granularity;
+            console.log('finalResult');
             const finalResult = await getBarsData(symbolInfo.ticker, resolution, config, 1, from, to);
             if (finalResult.length === 1) {
                 onRealtimeCallback(finalResult[0]);
@@ -362,7 +370,7 @@ export default config => {
             try {
                 // const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8888`);
                 const response = await fetch(
-                    `${config.host}:${config.port}/info?name=${symbolInfo.ticker.split('=>')[0]}`
+                    `/info?name=${symbolInfo.ticker.split('=>')[0]}`
                 );
                 const result = await response.json();
                 // console.log('getMarks result', result);
