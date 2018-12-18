@@ -41,13 +41,10 @@ class Chart extends Component {
                 'mainSeriesProperties.candleStyle.wickDownColor': '#7f323f'
             }
         });
-        window.onload=()=>{
-            this.setState({
-                showEditBut: true
-            })
-        }
+        const showEditBut = this.showEditBut;
         window.tvWidget.onChartReady(function () {
             console.log('tvWidget.onChartReady');
+            showEditBut && showEditBut();
             // 偏门方法实现，点击输入框自动打开 交易所/策略选择的下拉框
             const iframe = document.querySelector('iframe');
             const inputEdit = iframe.contentWindow.document.querySelector('input.symbol-edit');
@@ -61,6 +58,11 @@ class Chart extends Component {
                 // inputEdit.value = value;
             });
         });
+    }
+    showEditBut = () => {
+        this.setState({
+            showEditBut: true
+        })
     }
     getBalance = async () => {
         this.setState({
