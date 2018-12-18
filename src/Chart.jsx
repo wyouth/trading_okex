@@ -6,7 +6,8 @@ class Chart extends Component {
     state = {
         showBalance: false,
         balanceData: null,
-        modalLoading: false
+        modalLoading: false,
+        showEditBut: false
     }
     componentDidMount() {
         const config = this.props.config;
@@ -40,6 +41,11 @@ class Chart extends Component {
                 'mainSeriesProperties.candleStyle.wickDownColor': '#7f323f'
             }
         });
+        window.onload=()=>{
+            this.setState({
+                showEditBut: true
+            })
+        }
         window.tvWidget.onChartReady(function () {
             console.log('tvWidget.onChartReady');
             // 偏门方法实现，点击输入框自动打开 交易所/策略选择的下拉框
@@ -192,19 +198,27 @@ class Chart extends Component {
         return (
             <div className="box">
                 <div id="tv_chart_container" style={{ height: '100%' }} />
-                <div
-                    className="balance_button"
-                    onClick={
-                        this.showBalance
-                    }
-                >
-                    <span>
-                        资产
-                    </span>
-                </div>
-                <a href = "/logout" className="balance_button logout">
-                    退出
-                </a>
+                {
+                    this.state.showEditBut
+                        ? (
+                        <>
+                            <div
+                                className="balance_button"
+                                onClick={
+                                    this.showBalance
+                                }
+                            >
+                            <span>
+                                资产
+                            </span>
+                            </div>
+                            <a href = "/logout" className="balance_button logout">
+                                退出
+                            </a>
+                        </>
+                        )
+                            : <></>
+                }
                 {
                     this.state.showBalance
                         ? (

@@ -1,25 +1,27 @@
 .box {
-  min-height: 700px;
+    min-height: 760px;
+    position: relative;
 }
 .balance_button {
-  position: absolute;
-  top: 648px;
-  left: 10px;
-  padding: 4px;
-  color: gray;
-  border: 1px solid gray;
-  border-radius: 4px;
-  font-size: 12px;
+    position: absolute;
+    top: 648px;
+    left: 10px;
+    padding: 4px;
+    color: gray;
+    border: 1px solid gray;
+    border-radius: 4px;
+    font-size: 12px;
 }
 .close_but,
 .balance_button:hover {
   cursor: pointer;
 }
 .balance_button.logout{
-  top: 684px;
-  color: #e61c1c;
-  border-color: #e61c1c;
-  text-decoration: none;
+    bottom: 12px;
+    top: auto;
+    color: #e61c1c;
+    border-color: #e61c1c;
+    text-decoration: none;
 }
 .no_data {
   margin-top: 40px;
